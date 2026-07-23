@@ -20,6 +20,20 @@ const fetchCrosshairs = async () => {
   return result
 }
 
+const DesktopHeroScene = () => {
+  const [enabled, setEnabled] = useState(() => window.matchMedia('(min-width: 651px)').matches)
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 651px)')
+    const update = () => setEnabled(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  if (!enabled) return null
+  return <Suspense fallback={null}><HeroScene /></Suspense>
+}
+
 const Icon = ({ name, size = 20 }) => {
   const paths = {
     search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
@@ -555,11 +569,14 @@ export default function App() {
         <section className="hero">
           <div className="hero__grid" />
           <div className="hero__noise" />
-          <Suspense fallback={null}><HeroScene /></Suspense>
+          <DesktopHeroScene />
           <div className="hero__copy">
             <div className="kicker"><span />{t('hero.kicker')}</div>
             <h1>{t('hero.title')} <em>{t('hero.accent')}</em></h1>
-            <p>{t('hero.line1')}<br />{t('hero.line2')}</p>
+            <p className="hero__description">
+              <span>{t('hero.line1')}</span>
+              <span>{t('hero.line2')}</span>
+            </p>
             <a href="#gallery" className="hero-button">{t('hero.cta')}<Icon name="arrow" /></a>
             <div className="hero__stats">
               <div><strong>{items.length || '—'}</strong><span>{t('hero.crosshairs')}</span></div>
