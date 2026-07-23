@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { languages } from './i18n'
 
@@ -48,12 +48,14 @@ function LanguageSwitcher() {
         <Icon name="chevron" size={14} />
       </button>
       {open && (
-        <div className="language-menu">
+        <div className="language-menu" role="menu">
           <span>{t('language.label')}</span>
           {languages.map((language) => (
             <button
               className={language.code === current.code ? 'active' : ''}
               key={language.code}
+              role="menuitemradio"
+              aria-checked={language.code === current.code}
               onClick={() => { i18n.changeLanguage(language.code); setOpen(false) }}
             >
               <span className="language-flag">{language.flag}</span>
@@ -89,7 +91,7 @@ function CrosshairCard({ item, onOpen, onCopy }) {
   }
 
   return (
-    <article className="card" onClick={() => onOpen(item)}>
+    <article className="card">
       <div className="card__image-wrap">
         <img className="card__image" src={item.image} alt={`${t('gallery.game')} — ${item.title}`} />
         <span className="card__badge"><span className="live-dot" />{t('gallery.game')}</span>
@@ -107,6 +109,7 @@ function CrosshairCard({ item, onOpen, onCopy }) {
           {item.tags.map((tag) => <span className="tag" key={tag}>#{t(`tags.${tag}`, { defaultValue: tag })}</span>)}
         </div>
       </div>
+      <button className="card__open" onClick={() => onOpen(item)} aria-label={item.title} />
     </article>
   )
 }
@@ -114,10 +117,31 @@ function CrosshairCard({ item, onOpen, onCopy }) {
 function DetailModal({ item, onClose, onCopy }) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
+  const modalRef = useRef(null)
   useEffect(() => {
-    const handleKey = (event) => event.key === 'Escape' && onClose()
+    const previouslyFocused = document.activeElement
+    const focusable = () => [...modalRef.current.querySelectorAll('button, [href], input, textarea, [tabindex]:not([tabindex="-1"])')]
+    focusable()[0]?.focus()
+    const handleKey = (event) => {
+      if (event.key === 'Escape') return onClose()
+      if (event.key !== 'Tab') return
+      const elements = focusable()
+      if (!elements.length) return
+      const first = elements[0]
+      const last = elements[elements.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
     window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      previouslyFocused?.focus()
+    }
   }, [onClose])
 
   if (!item) return null
@@ -128,7 +152,7 @@ function DetailModal({ item, onClose, onCopy }) {
   }
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
-      <div className="detail-modal" onMouseDown={(event) => event.stopPropagation()}>
+      <div ref={modalRef} className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="crosshair-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
         <button className="icon-button modal-close" onClick={onClose} aria-label={t('common.close')}><Icon name="close" /></button>
         <div className="detail-modal__visual">
           <img src={item.image} alt={`${t('gallery.game')} — ${item.title}`} />
@@ -136,7 +160,7 @@ function DetailModal({ item, onClose, onCopy }) {
         </div>
         <div className="detail-modal__content">
           <span className="eyebrow">{t('detail.eyebrow')}</span>
-          <h2>{item.title}</h2>
+          <h2 id="crosshair-dialog-title">{item.title}</h2>
           <p>{t(`seed.${item.id}`, { defaultValue: item.description || t('detail.fallback') })}</p>
           <div className="tags tags--large">{item.tags.map((tag) => <span className="tag" key={tag}>#{t(`tags.${tag}`, { defaultValue: tag })}</span>)}</div>
           <div className="code-box">
@@ -167,39 +191,66 @@ function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated
     event.preventDefault()
     setLoading(true)
     setError('')
-    const response = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    })
-    const result = await response.json()
-    setLoading(false)
-    if (!response.ok) return setError(result.code ? t(`errors.${result.code}`) : result.error)
-    setAuthenticated(true)
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Request': '1' },
+        body: JSON.stringify({ password }),
+      })
+      const result = await response.json()
+      if (!response.ok) return setError(result.code ? t(`errors.${result.code}`) : result.error)
+      setAuthenticated(true)
+    } catch {
+      setError(t('errors.network'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const submit = async (event) => {
     event.preventDefault()
+    const form = event.currentTarget
     setLoading(true)
     setError('')
-    const response = await fetch('/api/crosshairs', { method: 'POST', body: new FormData(event.currentTarget) })
-    const result = await response.json()
-    setLoading(false)
-    if (!response.ok) return setError(result.code ? t(`errors.${result.code}`) : result.error)
-    event.currentTarget.reset()
-    setPreview('')
-    onCreated(result)
+    try {
+      const response = await fetch('/api/crosshairs', {
+        method: 'POST',
+        headers: { 'X-Admin-Request': '1' },
+        body: new FormData(form),
+      })
+      const result = await response.json()
+      if (!response.ok) return setError(result.code ? t(`errors.${result.code}`) : result.error)
+      form.reset()
+      setPreview('')
+      onCreated(result)
+    } catch {
+      setError(t('errors.network'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const remove = async (item) => {
     if (!window.confirm(t('admin.deleteConfirm', { title: item.title }))) return
-    const response = await fetch(`/api/crosshairs/${item.id}`, { method: 'DELETE' })
-    if (response.ok) onDeleted(item.id)
+    try {
+      const response = await fetch(`/api/crosshairs/${item.id}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Request': '1' },
+      })
+      if (response.ok) onDeleted(item.id)
+      else setError(t('errors.generic'))
+    } catch {
+      setError(t('errors.network'))
+    }
   }
 
   const logout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' })
-    setAuthenticated(false)
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', headers: { 'X-Admin-Request': '1' } })
+      setAuthenticated(false)
+    } catch {
+      setError(t('errors.network'))
+    }
   }
 
   return (
@@ -276,16 +327,19 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(false)
   const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     Promise.all([
       fetch('/api/crosshairs').then((response) => response.json()),
-      fetch('/api/admin/session').then((response) => response.json()),
+      isAdminRoute
+        ? fetch('/api/admin/session').then((response) => response.json())
+        : Promise.resolve({ authenticated: false }),
     ]).then(([crosshairs, session]) => {
       setItems(crosshairs)
       setAuthenticated(session.authenticated)
-    }).finally(() => setLoading(false))
-  }, [])
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false))
+  }, [isAdminRoute])
 
   useEffect(() => {
     document.title = isAdminRoute ? `Admin — Fragpunk Crosshairs` : 'Fragpunk Crosshairs'
@@ -310,8 +364,15 @@ export default function App() {
   const copyCode = async (item) => {
     await navigator.clipboard.writeText(item.code)
     setToast(t('toast.copied'))
-    setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, copies: (entry.copies || 0) + 1 } : entry))
-    fetch(`/api/crosshairs/${item.id}/copy`, { method: 'POST' }).catch(() => {})
+    try {
+      const response = await fetch(`/api/crosshairs/${item.id}/copy`, { method: 'POST' })
+      if (response.ok) {
+        const result = await response.json()
+        setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, copies: result.copies } : entry))
+      }
+    } catch {
+      // The copy itself succeeded; the counter will be refreshed on the next page load.
+    }
     window.setTimeout(() => setToast(''), 1800)
   }
 
@@ -402,6 +463,8 @@ export default function App() {
 
           {loading ? (
             <div className="cards-grid">{[1, 2, 3, 4, 5, 6].map((key) => <div className="card skeleton" key={key} />)}</div>
+          ) : loadError ? (
+            <div className="empty-state"><Icon name="crosshair" size={42} /><h3>{t('errors.network')}</h3><p>{t('errors.generic')}</p><button onClick={() => window.location.reload()}>{t('gallery.retry')}</button></div>
           ) : filtered.length ? (
             <div className="cards-grid">{filtered.map((item) => <CrosshairCard item={item} key={item.id} onOpen={setSelected} onCopy={copyCode} />)}</div>
           ) : (

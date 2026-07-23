@@ -1,29 +1,84 @@
 # Fragpunk Crosshairs
 
-Галерея кодов прицелов для FragPunk с закрытой админ-панелью.
+Production-ready галерея кодов прицелов для FragPunk с закрытой страницей `/admin`.
 
-Интерфейс доступен на русском, английском, немецком, французском и китайском языках. Выбранный язык сохраняется в браузере.
+## Архитектура
 
-Первый экран использует лениво загружаемую Three.js-сцену, а появление секций и карточек анимируется через GSAP ScrollTrigger.
+- React + Vite — публичная галерея и админ-панель.
+- Express — API, безопасность и раздача production-сборки.
+- PostgreSQL — прицелы и атомарный счётчик копирований.
+- Redis — защита входа и дедупликация копирований.
+- S3-совместимое хранилище — скриншоты.
+- Sharp — проверка, очистка и преобразование изображений в WebP.
 
-## Запуск
+Демонстрационные записи из `data/crosshairs.json` импортируются в пустую БД с нулевыми счётчиками.
+
+## Локальный запуск через Docker
+
+1. Скопируйте `.env.example` в `.env`.
+2. Замените все пароли и секреты в `.env`.
+3. Запустите:
 
 ```bash
-npm install
-copy .env.example .env
+docker compose up --build
+```
+
+Сайт: `http://localhost:14173`  
+Админ-панель: `http://localhost:14173/admin`  
+Health-check: `http://localhost:14173/healthz`  
+Локальная консоль MinIO: `http://localhost:19001`
+
+## Разработка frontend
+
+Запустите инфраструктуру:
+
+```bash
+docker compose up postgres redis minio
+```
+
+Затем:
+
+```bash
+npm ci
 npm run dev
 ```
 
-Откройте `http://localhost:5173`. Админ-панель доступна только по адресу `http://localhost:5173/admin`. API работает на `http://localhost:4173`.
+Vite работает на `http://localhost:5173`, API — на `http://localhost:4173`.
 
-Для production:
+## Production
+
+Используйте управляемые PostgreSQL, Redis и S3/R2. Внешний MinIO из `compose.yaml` предназначен для локального или закрытого окружения.
+
+Обязательные переменные:
+
+- `NODE_ENV=production`
+- `HTTPS_ENABLED=true`
+- `ADMIN_PASSWORD` — минимум 16 символов
+- `SESSION_SECRET` — минимум 32 символа
+- `DATABASE_URL`
+- `DATABASE_SSL=true` для внешней БД
+- `REDIS_URL`
+- `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`
+- `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
+- `PUBLIC_ORIGIN=https://ваш-домен`
+- `TRUST_PROXY=1` за одним доверенным reverse proxy
+
+Приложение завершает запуск при отсутствующей или небезопасной конфигурации.
+
+## Проверки
 
 ```bash
-npm run build
-npm start
+npm run check
+npm audit --omit=dev
+docker compose --env-file .env.example config --quiet
 ```
 
-Перед публикацией обязательно задайте длинные `ADMIN_PASSWORD` и `SESSION_SECRET`.
-Если переменные не заданы, локальный тестовый пароль: `fragpunk-admin`.
+CI выполняет линтер, тесты, сборку, аудит production-зависимостей и сборку Docker-образа.
 
-Данные сохраняются в `data/crosshairs.json`, загруженные изображения — в `uploads/`.
+## Эксплуатация
+
+- Настройте HTTPS на балансировщике или reverse proxy.
+- Делайте автоматические резервные копии PostgreSQL и S3.
+- Подключите сбор структурированных JSON-логов.
+- Проверяйте `/healthz` из оркестратора.
+- Не публикуйте MinIO, PostgreSQL и Redis напрямую в интернет.
