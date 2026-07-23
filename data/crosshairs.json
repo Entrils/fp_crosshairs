@@ -1,0 +1,86 @@
+[
+  {
+    "id": "neon-precision",
+    "title": "mexxy1",
+    "code": "0;P;c;5;h;0;f;0;0b;0;1b;0;S;c;4;s;0.72;o;1",
+    "description": "Тонкий статичный крест для точных одиночных выстрелов.",
+    "tags": [
+      "точка",
+      "точный",
+      "зелёный"
+    ],
+    "image": "/previews/neon-precision.svg",
+    "copies": 1844,
+    "createdAt": "2026-07-18T12:00:00.000Z"
+  },
+  {
+    "id": "minimal-dot",
+    "title": "mexxy2",
+    "code": "0;P;c;1;h;0;d;1;z;2;f;0;0b;0;1b;0",
+    "description": "Чистая точка без лишних линий — максимум обзора.",
+    "tags": [
+      "точка",
+      "минимализм",
+      "белый"
+    ],
+    "image": "/previews/minimal-dot.svg",
+    "copies": 1267,
+    "createdAt": "2026-07-16T09:30:00.000Z"
+  },
+  {
+    "id": "cyan-gap",
+    "title": "mexxy3",
+    "code": "0;P;c;5;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "description": "Контрастный голубой крест с открытым центром.",
+    "tags": [
+      "крест",
+      "с зазором",
+      "голубой"
+    ],
+    "image": "/previews/cyan-gap.svg",
+    "copies": 988,
+    "createdAt": "2026-07-14T18:10:00.000Z"
+  },
+  {
+    "id": "tiny-red",
+    "title": "Tiny Red",
+    "code": "0;P;c;7;h;0;f;0;0l;2;0o;1;0a;1;0f;0;1b;0",
+    "description": "Микро-прицел для любителей агрессивной игры.",
+    "tags": [
+      "маленький",
+      "крест",
+      "красный"
+    ],
+    "image": "/previews/tiny-red.svg",
+    "copies": 731,
+    "createdAt": "2026-07-12T14:45:00.000Z"
+  },
+  {
+    "id": "classic-green",
+    "title": "Classic Green",
+    "code": "0;P;c;1;h;0;f;0;0l;5;0o;2;0a;1;0f;0;1b;0",
+    "description": "Универсальная классика для любого оружия.",
+    "tags": [
+      "классика",
+      "крест",
+      "зелёный"
+    ],
+    "image": "/previews/classic-green.svg",
+    "copies": 655,
+    "createdAt": "2026-07-10T11:15:00.000Z"
+  },
+  {
+    "id": "pink-pop",
+    "title": "Pink Pop",
+    "code": "0;P;c;8;h;0;f;0;0l;3;0o;1;0a;1;0f;0;1b;0",
+    "description": "Яркий розовый прицел, заметный на любой карте.",
+    "tags": [
+      "яркий",
+      "крест",
+      "розовый"
+    ],
+    "image": "/previews/pink-pop.svg",
+    "copies": 421,
+    "createdAt": "2026-07-08T16:20:00.000Z"
+  }
+]
