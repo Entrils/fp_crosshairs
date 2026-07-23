@@ -9,6 +9,8 @@
       "точный",
       "зелёный"
     ],
+    "color": "green",
+    "type": "dot",
     "image": "/previews/neon-precision.svg",
     "copies": 0,
     "createdAt": "2026-07-18T12:00:00.000Z"
@@ -23,6 +25,8 @@
       "минимализм",
       "белый"
     ],
+    "color": "white",
+    "type": "dot",
     "image": "/previews/minimal-dot.svg",
     "copies": 0,
     "createdAt": "2026-07-16T09:30:00.000Z"
@@ -37,6 +41,8 @@
       "с зазором",
       "голубой"
     ],
+    "color": "blue",
+    "type": "circle",
     "image": "/previews/cyan-gap.svg",
     "copies": 0,
     "createdAt": "2026-07-14T18:10:00.000Z"
@@ -51,6 +57,8 @@
       "крест",
       "красный"
     ],
+    "color": "red",
+    "type": "square",
     "image": "/previews/tiny-red.svg",
     "copies": 0,
     "createdAt": "2026-07-12T14:45:00.000Z"
@@ -65,6 +73,8 @@
       "крест",
       "зелёный"
     ],
+    "color": "green",
+    "type": "circle",
     "image": "/previews/classic-green.svg",
     "copies": 0,
     "createdAt": "2026-07-10T11:15:00.000Z"
@@ -79,6 +89,8 @@
       "крест",
       "розовый"
     ],
+    "color": "violet",
+    "type": "",
     "image": "/previews/pink-pop.svg",
     "copies": 0,
     "createdAt": "2026-07-08T16:20:00.000Z"

@@ -4,14 +4,22 @@ Production-ready галерея кодов прицелов для FragPunk с �
 
 ## Архитектура
 
-- React + Vite — публичная галерея и админ-панель.
-- Express — API, безопасность и раздача production-сборки.
+- `client/` — React, Vite, i18n, Three.js, публичная галерея и админ-панель.
+- `server/` — Express API, PostgreSQL-репозиторий, Redis, S3 и серверные тесты.
+- корень проекта — npm workspaces, Docker Compose, CI и общая конфигурация ESLint.
 - PostgreSQL — прицелы и атомарный счётчик копирований.
 - Redis — защита входа и дедупликация копирований.
 - S3-совместимое хранилище — скриншоты.
 - Sharp — проверка, очистка и преобразование изображений в WebP.
 
-Демонстрационные записи из `data/crosshairs.json` импортируются в пустую БД с нулевыми счётчиками.
+Express раздаёт готовую сборку из `client/dist` только в production. Во время разработки Vite проксирует
+`/api` и `/media` на сервер.
+
+Демонстрационные записи из `server/data/crosshairs.json` импортируются в пустую БД с нулевыми счётчиками.
+
+Каждый прицел содержит код, скриншот, теги, обязательный цвет и необязательный тип. Допустимые цвета:
+`red`, `orange`, `yellow`, `green`, `blue`, `indigo`, `violet`, `white`, `black`. Допустимые типы:
+`circle`, `dot`, `square`.
 
 ## Локальный запуск через Docker
 
@@ -28,7 +36,7 @@ docker compose up --build
 Health-check: `http://localhost:14173/healthz`  
 Локальная консоль MinIO: `http://localhost:19001`
 
-## Разработка frontend
+## Разработка
 
 Запустите инфраструктуру:
 
@@ -44,6 +52,19 @@ npm run dev
 ```
 
 Vite работает на `http://localhost:5173`, API — на `http://localhost:4173`.
+
+Запустить части отдельно:
+
+```bash
+npm run dev --workspace client
+npm run dev --workspace server
+```
+
+Собрать только клиент:
+
+```bash
+npm run build --workspace client
+```
 
 ## Production
 

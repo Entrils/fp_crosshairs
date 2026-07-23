@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createSessionManager, passwordMatches } from '../backend/session.js'
+import { createSessionManager, passwordMatches } from '../src/session.js'
 
 describe('session security', () => {
   it('accepts valid sessions and rejects tampering', () => {

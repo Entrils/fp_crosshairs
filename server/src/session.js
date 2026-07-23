@@ -8,7 +8,7 @@ const safeEqual = (firstValue, secondValue) => {
 
 export const passwordMatches = (provided, expected) => safeEqual(provided, expected)
 
-export const createSessionManager = (secret, lifetimeMs = 8 * 60 * 60 * 1000) => {
+export const createSessionManager = (secret, lifetimeMs = 12 * 60 * 60 * 1000) => {
   const sign = (value) =>
     crypto.createHmac('sha256', secret).update(value).digest('base64url')
 

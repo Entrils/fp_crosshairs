@@ -1,6 +1,6 @@
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
-import { processScreenshot } from '../backend/storage.js'
+import { processScreenshot } from '../src/storage.js'
 
 describe('screenshot processing', () => {
   it('normalizes images to bounded WebP files', async () => {

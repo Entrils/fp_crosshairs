@@ -8,7 +8,7 @@ services:
       - "${APP_PORT:-14173}:4173"
     environment:
       NODE_ENV: production
-      HTTPS_ENABLED: "false"
+      HTTPS_ENABLED: ${HTTPS_ENABLED:-false}
       PORT: 4173
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}

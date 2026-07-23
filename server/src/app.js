@@ -11,10 +11,17 @@ import { passwordMatches } from './session.js'
 
 const cookieName = 'fragpunk_crosshairs_admin'
 const mediaKeyPattern = /^crosshair-[a-zA-Z0-9-]+\.webp$/
+const crosshairColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'white', 'black']
+const crosshairTypes = ['circle', 'dot', 'square']
 const crosshairInput = z.object({
   title: z.string().trim().min(1).max(80),
   code: z.string().trim().min(1).max(4000),
   description: z.string().trim().max(300).default(''),
+  color: z.enum(crosshairColors),
+  type: z.preprocess(
+    (value) => value == null || value === '' ? null : value,
+    z.enum(crosshairTypes).nullable(),
+  ),
   tags: z.string().default('').transform((value) =>
     [...new Set(value.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean))]
       .filter((tag) => tag.length <= 30)
@@ -73,7 +80,7 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     httpOnly: true,
     sameSite: 'strict',
     secure: config.HTTPS_ENABLED,
-    maxAge: 8 * 60 * 60 * 1000,
+    maxAge: 12 * 60 * 60 * 1000,
     path: '/',
   }
   const hasSession = (request) => sessionManager.verify(request.cookies[cookieName])
@@ -182,6 +189,60 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
           }
         }
         next(error)
+      }
+    },
+  )
+
+  app.patch(
+    '/api/crosshairs/:id',
+    requireAdmin,
+    requireTrustedMutation,
+    upload.single('screenshot'),
+    async (request, response, next) => {
+      let replacementImage
+      let committed = false
+      try {
+        const existing = await repository.find(request.params.id)
+        if (!existing) return response.status(404).json({ code: 'notFound', error: 'Crosshair not found' })
+
+        const parsed = crosshairInput.parse(request.body)
+        if (request.file) replacementImage = await storage.putScreenshot(request.file.buffer)
+
+        const updated = await repository.update(request.params.id, {
+          ...parsed,
+          image: replacementImage?.url || existing.image,
+          imageKey: replacementImage?.key || existing.imageKey,
+        })
+        if (!updated) {
+          return response.status(404).json({ code: 'notFound', error: 'Crosshair not found' })
+        }
+        committed = true
+
+        if (replacementImage && existing.imageKey) {
+          try {
+            await storage.delete(existing.imageKey)
+          } catch (error) {
+            log('error', 'Failed to delete replaced image object', {
+              error: error.message,
+              imageKey: existing.imageKey,
+              requestId: request.id,
+            })
+          }
+        }
+        response.json(updated)
+      } catch (error) {
+        next(error)
+      } finally {
+        if (replacementImage?.key && !committed) {
+          try {
+            await storage.delete(replacementImage.key)
+          } catch (cleanupError) {
+            log('error', 'Failed to clean up replacement image', {
+              error: cleanupError.message,
+              requestId: request.id,
+            })
+          }
+        }
       }
     },
   )

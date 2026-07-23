@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loadConfig } from '../backend/config.js'
+import { loadConfig } from '../src/config.js'
 
 const validEnvironment = {
   NODE_ENV: 'production',

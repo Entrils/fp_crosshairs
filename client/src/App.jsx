@@ -4,6 +4,21 @@ import { languages } from './i18n'
 
 const HeroScene = lazy(() => import('./HeroScene'))
 const MotionEffects = lazy(() => import('./MotionEffects'))
+const colorOptions = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'white', 'black']
+const typeOptions = ['circle', 'dot', 'square']
+
+const fetchJson = async (url, options) => {
+  const response = await fetch(url, options)
+  const result = await response.json().catch(() => null)
+  if (!response.ok) throw new Error(result?.error || `HTTP ${response.status}`)
+  return result
+}
+
+const fetchCrosshairs = async () => {
+  const result = await fetchJson('/api/crosshairs')
+  if (!Array.isArray(result)) throw new Error('Invalid crosshair response')
+  return result
+}
 
 const Icon = ({ name, size = 20 }) => {
   const paths = {
@@ -13,6 +28,7 @@ const Icon = ({ name, size = 20 }) => {
     close: <><path d="m6 6 12 12M18 6 6 18" /></>,
     lock: <><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
     upload: <><path d="M12 3v12m0-12-5 5m5-5 5 5" /><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></>,
+    edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z" /></>,
     trash: <><path d="M3 6h18M8 6V4h8v2m3 0-1 15H6L5 6" /><path d="M10 11v5m4-5v5" /></>,
     arrow: <><path d="M5 12h14m-5-5 5 5-5 5" /></>,
     crosshair: <><circle cx="12" cy="12" r="6" /><path d="M12 2v4m0 12v4M2 12h4m12 0h4" /></>,
@@ -79,15 +95,32 @@ function Toast({ message }) {
   return <div className={`toast ${message ? 'toast--visible' : ''}`}><Icon name="check" size={17} />{message}</div>
 }
 
+function CrosshairAttributes({ item }) {
+  const { t } = useTranslation()
+  if (!item.color && !item.type) return null
+  return (
+    <div className="crosshair-attributes">
+      {item.color && (
+        <span>
+          <i className={`color-swatch color-swatch--${item.color}`} />
+          {t(`options.colors.${item.color}`, { defaultValue: item.color })}
+        </span>
+      )}
+      {item.type && <span>{t(`options.types.${item.type}`, { defaultValue: item.type })}</span>}
+    </div>
+  )
+}
+
 function CrosshairCard({ item, onOpen, onCopy }) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   const copy = async (event) => {
     event.stopPropagation()
-    setCopied(true)
-    await onCopy(item)
-    window.setTimeout(() => setCopied(false), 1500)
+    if (await onCopy(item)) {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    }
   }
 
   return (
@@ -108,6 +141,7 @@ function CrosshairCard({ item, onOpen, onCopy }) {
         <div className="tags">
           {item.tags.map((tag) => <span className="tag" key={tag}>#{t(`tags.${tag}`, { defaultValue: tag })}</span>)}
         </div>
+        <CrosshairAttributes item={item} />
       </div>
       <button className="card__open" onClick={() => onOpen(item)} aria-label={item.title} />
     </article>
@@ -146,9 +180,10 @@ function DetailModal({ item, onClose, onCopy }) {
 
   if (!item) return null
   const copy = async () => {
-    await onCopy(item)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 1600)
+    if (await onCopy(item)) {
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    }
   }
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
@@ -163,6 +198,7 @@ function DetailModal({ item, onClose, onCopy }) {
           <h2 id="crosshair-dialog-title">{item.title}</h2>
           <p>{t(`seed.${item.id}`, { defaultValue: item.description || t('detail.fallback') })}</p>
           <div className="tags tags--large">{item.tags.map((tag) => <span className="tag" key={tag}>#{t(`tags.${tag}`, { defaultValue: tag })}</span>)}</div>
+          <CrosshairAttributes item={item} />
           <div className="code-box">
             <code>{item.code}</code>
             <button onClick={copy} className={copied ? 'copied' : ''}><Icon name={copied ? 'check' : 'copy'} size={17} />{copied ? t('common.copiedCode') : t('common.copyCode')}</button>
@@ -177,13 +213,14 @@ function DetailModal({ item, onClose, onCopy }) {
   )
 }
 
-function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated, onDeleted, standalone = false }) {
+function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated, onUpdated, onDeleted, standalone = false }) {
   const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [preview, setPreview] = useState('')
   const [activeTab, setActiveTab] = useState('add')
+  const [editingItem, setEditingItem] = useState(null)
 
   useEffect(() => () => preview && URL.revokeObjectURL(preview), [preview])
 
@@ -228,6 +265,44 @@ function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated
     } finally {
       setLoading(false)
     }
+  }
+
+  const saveEdit = async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    setLoading(true)
+    setError('')
+    try {
+      const response = await fetch(`/api/crosshairs/${editingItem.id}`, {
+        method: 'PATCH',
+        headers: { 'X-Admin-Request': '1' },
+        body: new FormData(form),
+      })
+      const result = await response.json()
+      if (!response.ok) return setError(result.code ? t(`errors.${result.code}`) : result.error)
+      onUpdated(result)
+      setPreview('')
+      setEditingItem(null)
+      setActiveTab('manage')
+    } catch {
+      setError(t('errors.network'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openEditor = (item) => {
+    setError('')
+    setPreview('')
+    setEditingItem(item)
+    setActiveTab('edit')
+  }
+
+  const openTab = (tab) => {
+    setError('')
+    setPreview('')
+    setEditingItem(null)
+    setActiveTab(tab)
   }
 
   const remove = async (item) => {
@@ -277,26 +352,61 @@ function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated
               <button className="logout-button" onClick={logout}><Icon name="logout" size={17} />{t('admin.logout')}</button>
             </header>
             <div className="admin-tabs">
-              <button className={activeTab === 'add' ? 'active' : ''} onClick={() => setActiveTab('add')}>{t('admin.addTab')}</button>
-              <button className={activeTab === 'manage' ? 'active' : ''} onClick={() => setActiveTab('manage')}>{t('admin.allTab')} <span>{items.length}</span></button>
+              <button className={activeTab === 'add' ? 'active' : ''} onClick={() => openTab('add')}>{t('admin.addTab')}</button>
+              <button className={activeTab === 'manage' ? 'active' : ''} onClick={() => openTab('manage')}>{t('admin.allTab')} <span>{items.length}</span></button>
+              {editingItem && <button className="active">{t('admin.editTab')}</button>}
             </div>
-            {activeTab === 'add' ? (
-              <form className="upload-form" onSubmit={submit}>
+            {activeTab === 'add' || (activeTab === 'edit' && editingItem) ? (
+              <form
+                className="upload-form"
+                key={editingItem?.id || 'new-crosshair'}
+                onSubmit={editingItem ? saveEdit : submit}
+              >
                 <div className="form-grid">
-                  <label>{t('admin.name')}<input name="title" placeholder={t('admin.namePlaceholder')} maxLength="80" required /></label>
-                  <label>{t('admin.tags')}<input name="tags" placeholder={t('admin.tagsPlaceholder')} /></label>
+                  <label>{t('admin.name')}<input name="title" defaultValue={editingItem?.title || ''} placeholder={t('admin.namePlaceholder')} maxLength="80" required /></label>
+                  <label>{t('admin.tags')}<input name="tags" defaultValue={editingItem?.tags.join(', ') || ''} placeholder={t('admin.tagsPlaceholder')} /></label>
                 </div>
-                <label>{t('admin.code')}<textarea name="code" placeholder={t('admin.codePlaceholder')} rows="4" required /></label>
-                <label>{t('admin.description')}<textarea name="description" placeholder={t('admin.descriptionPlaceholder')} rows="2" maxLength="300" /></label>
-                <label className={`dropzone ${preview ? 'dropzone--ready' : ''}`}>
-                  {preview ? <><img src={preview} alt="" /><span className="replace-hint">{t('admin.replace')}</span></> : <><Icon name="image" size={30} /><strong>{t('admin.uploadTitle')}</strong><span>{t('admin.uploadHint')}</span></>}
+                <div className="form-grid">
+                  <label>
+                    {t('admin.color')}
+                    <select name="color" defaultValue={editingItem?.color || ''} required>
+                      <option value="" disabled>{t('admin.selectColor')}</option>
+                      {colorOptions.map((color) => (
+                        <option value={color} key={color}>{t(`options.colors.${color}`)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    {t('admin.type')}
+                    <select name="type" defaultValue={editingItem?.type || ''}>
+                      <option value="">{t('admin.noType')}</option>
+                      {typeOptions.map((type) => (
+                        <option value={type} key={type}>{t(`options.types.${type}`)}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <label>{t('admin.code')}<textarea name="code" defaultValue={editingItem?.code || ''} placeholder={t('admin.codePlaceholder')} rows="4" required /></label>
+                <label>{t('admin.description')}<textarea name="description" defaultValue={editingItem?.description || ''} placeholder={t('admin.descriptionPlaceholder')} rows="2" maxLength="300" /></label>
+                <label className={`dropzone ${preview || editingItem?.image ? 'dropzone--ready' : ''}`}>
+                  {preview || editingItem?.image
+                    ? <><img src={preview || editingItem.image} alt="" /><span className="replace-hint">{t('admin.replace')}</span></>
+                    : <><Icon name="image" size={30} /><strong>{t('admin.uploadTitle')}</strong><span>{t('admin.uploadHint')}</span></>}
                   <input name="screenshot" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => {
                     if (preview) URL.revokeObjectURL(preview)
                     setPreview(event.target.files[0] ? URL.createObjectURL(event.target.files[0]) : '')
-                  }} required />
+                  }} required={!editingItem} />
                 </label>
                 {error && <div className="form-error">{error}</div>}
-                <button className="primary-button" disabled={loading}><Icon name="upload" />{loading ? t('admin.uploading') : t('admin.publish')}</button>
+                <div className="form-actions">
+                  {editingItem && <button type="button" className="secondary-button" onClick={() => openTab('manage')}>{t('admin.cancel')}</button>}
+                  <button className="primary-button" disabled={loading}>
+                    <Icon name={editingItem ? 'check' : 'upload'} />
+                    {editingItem
+                      ? loading ? t('admin.saving') : t('admin.saveChanges')
+                      : loading ? t('admin.uploading') : t('admin.publish')}
+                  </button>
+                </div>
               </form>
             ) : (
               <div className="manage-list">
@@ -304,7 +414,10 @@ function AdminPanel({ items, authenticated, setAuthenticated, onClose, onCreated
                   <div className="manage-item" key={item.id}>
                     <img src={item.image} alt="" />
                     <div><strong>{item.title}</strong><span>{item.tags.map((tag) => `#${tag}`).join(' ')}</span></div>
-                    <button onClick={() => remove(item)} aria-label={t('admin.delete', { title: item.title })}><Icon name="trash" size={18} /></button>
+                    <div className="manage-actions">
+                      <button onClick={() => openEditor(item)} aria-label={t('admin.edit', { title: item.title })}><Icon name="edit" size={18} /></button>
+                      <button onClick={() => remove(item)} aria-label={t('admin.delete', { title: item.title })}><Icon name="trash" size={18} /></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -322,6 +435,8 @@ export default function App() {
   const [items, setItems] = useState([])
   const [query, setQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
+  const [selectedColor, setSelectedColor] = useState('all')
+  const [selectedType, setSelectedType] = useState('all')
   const [sort, setSort] = useState('popular')
   const [selected, setSelected] = useState(null)
   const [authenticated, setAuthenticated] = useState(false)
@@ -331,9 +446,9 @@ export default function App() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/crosshairs').then((response) => response.json()),
+      fetchCrosshairs(),
       isAdminRoute
-        ? fetch('/api/admin/session').then((response) => response.json())
+        ? fetchJson('/api/admin/session')
         : Promise.resolve({ authenticated: false }),
     ]).then(([crosshairs, session]) => {
       setItems(crosshairs)
@@ -355,14 +470,22 @@ export default function App() {
     const normalized = query.trim().toLowerCase()
     return items
       .filter((item) => selectedTag === 'all' || item.tags.includes(selectedTag))
+      .filter((item) => selectedColor === 'all' || item.color === selectedColor)
+      .filter((item) => selectedType === 'all' || (selectedType === 'none' ? !item.type : item.type === selectedType))
       .filter((item) => !normalized || item.title.toLowerCase().includes(normalized) || item.tags.some((tag) =>
         tag.includes(normalized) || t(`tags.${tag}`, { defaultValue: tag }).toLowerCase().includes(normalized),
       ))
       .sort((a, b) => sort === 'new' ? new Date(b.createdAt) - new Date(a.createdAt) : (b.copies || 0) - (a.copies || 0))
-  }, [items, query, selectedTag, sort, t])
+  }, [items, query, selectedTag, selectedColor, selectedType, sort, t])
 
   const copyCode = async (item) => {
-    await navigator.clipboard.writeText(item.code)
+    try {
+      await navigator.clipboard.writeText(item.code)
+    } catch {
+      setToast(t('errors.clipboard'))
+      window.setTimeout(() => setToast(''), 1800)
+      return false
+    }
     setToast(t('toast.copied'))
     try {
       const response = await fetch(`/api/crosshairs/${item.id}/copy`, { method: 'POST' })
@@ -374,11 +497,18 @@ export default function App() {
       // The copy itself succeeded; the counter will be refreshed on the next page load.
     }
     window.setTimeout(() => setToast(''), 1800)
+    return true
   }
 
   const addItem = (item) => {
     setItems((current) => [item, ...current])
     setToast(t('toast.published'))
+    window.setTimeout(() => setToast(''), 1800)
+  }
+  const updateItem = (item) => {
+    setItems((current) => current.map((entry) => entry.id === item.id ? item : entry))
+    setToast(t('toast.updated'))
+    window.setTimeout(() => setToast(''), 1800)
   }
   const deleteItem = (id) => setItems((current) => current.filter((item) => item.id !== id))
 
@@ -398,6 +528,7 @@ export default function App() {
           setAuthenticated={setAuthenticated}
           onClose={() => window.location.assign('/')}
           onCreated={addItem}
+          onUpdated={updateItem}
           onDeleted={deleteItem}
           standalone
         />
@@ -457,6 +588,27 @@ export default function App() {
               <button className={sort === 'new' ? 'active' : ''} onClick={() => setSort('new')}>{t('gallery.new')}</button>
             </div>
           </div>
+          <div className="attribute-filters">
+            <label>
+              <span>{t('filters.color')}</span>
+              <select value={selectedColor} onChange={(event) => setSelectedColor(event.target.value)}>
+                <option value="all">{t('filters.allColors')}</option>
+                {colorOptions.map((color) => (
+                  <option value={color} key={color}>{t(`options.colors.${color}`)}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>{t('filters.type')}</span>
+              <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)}>
+                <option value="all">{t('filters.allTypes')}</option>
+                {typeOptions.map((type) => (
+                  <option value={type} key={type}>{t(`options.types.${type}`)}</option>
+                ))}
+                <option value="none">{t('filters.noType')}</option>
+              </select>
+            </label>
+          </div>
           <div className="tag-filter">
             {['all', ...tags].map((tag) => <button key={tag} onClick={() => setSelectedTag(tag)} className={selectedTag === tag ? 'active' : ''}>{tag === 'all' ? t('gallery.all') : `# ${t(`tags.${tag}`, { defaultValue: tag })}`}</button>)}
           </div>
@@ -468,7 +620,7 @@ export default function App() {
           ) : filtered.length ? (
             <div className="cards-grid">{filtered.map((item) => <CrosshairCard item={item} key={item.id} onOpen={setSelected} onCopy={copyCode} />)}</div>
           ) : (
-            <div className="empty-state"><Icon name="crosshair" size={42} /><h3>{t('gallery.emptyTitle')}</h3><p>{t('gallery.emptyText')}</p><button onClick={() => { setQuery(''); setSelectedTag('all') }}>{t('gallery.reset')}</button></div>
+            <div className="empty-state"><Icon name="crosshair" size={42} /><h3>{t('gallery.emptyTitle')}</h3><p>{t('gallery.emptyText')}</p><button onClick={() => { setQuery(''); setSelectedTag('all'); setSelectedColor('all'); setSelectedType('all') }}>{t('gallery.reset')}</button></div>
           )}
         </section>
 

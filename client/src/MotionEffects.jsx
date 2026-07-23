@@ -10,7 +10,7 @@ export default function MotionEffects({ galleryReady, cardCount }) {
 
     const context = gsap.context(() => {
       gsap.from('.site-header', { y: -72, opacity: 0, duration: 0.65, ease: 'power3.out' })
-      gsap.from('.hero__copy > *', {
+      gsap.from('.hero__copy > *:not(.hero-button)', {
         y: 28,
         opacity: 0,
         duration: 0.75,

@@ -2,14 +2,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Pool } from 'pg'
 import { createClient } from 'redis'
-import { createApp } from './backend/app.js'
-import { loadConfig } from './backend/config.js'
-import { createRateLimits } from './backend/rate-limits.js'
-import { createRepository } from './backend/repository.js'
-import { createSessionManager } from './backend/session.js'
-import { createStorage } from './backend/storage.js'
+import { createApp } from './app.js'
+import { loadConfig } from './config.js'
+import { createRateLimits } from './rate-limits.js'
+import { createRepository } from './repository.js'
+import { createSessionManager } from './session.js'
+import { createStorage } from './storage.js'
 
-const projectDir = path.dirname(fileURLToPath(import.meta.url))
+const sourceDir = path.dirname(fileURLToPath(import.meta.url))
+const serverDir = path.dirname(sourceDir)
+const projectDir = path.dirname(serverDir)
 
 const start = async () => {
   const config = loadConfig()
@@ -34,7 +36,7 @@ const start = async () => {
   const sessionManager = createSessionManager(config.SESSION_SECRET)
 
   await repository.migrate()
-  await repository.seedFromFile(path.join(projectDir, 'data', 'crosshairs.json'))
+  await repository.seedFromFile(path.join(serverDir, 'data', 'crosshairs.json'))
   await storage.initialize()
 
   const app = createApp({
@@ -43,7 +45,7 @@ const start = async () => {
     storage,
     rateLimits,
     sessionManager,
-    distDir: path.join(projectDir, 'dist'),
+    distDir: path.join(projectDir, 'client', 'dist'),
   })
   const server = app.listen(config.PORT, () => {
     console.log(JSON.stringify({
