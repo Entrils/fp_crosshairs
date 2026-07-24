@@ -4,7 +4,7 @@ Production-ready галерея кодов прицелов для FragPunk с �
 
 ## Архитектура
 
-- `client/` — React, Vite, i18n, Three.js, публичная галерея и админ-панель.
+- `client/` — React, Vite, i18n и независимые компоненты Hero, Gallery, Modal, Admin и страницы прицела.
 - `server/` — Express API, PostgreSQL-репозиторий, Redis, S3 и серверные тесты.
 - корень проекта — npm workspaces, Docker Compose, CI и общая конфигурация ESLint.
 - PostgreSQL — прицелы и атомарный счётчик копирований.
@@ -14,6 +14,10 @@ Production-ready галерея кодов прицелов для FragPunk с �
 
 Express раздаёт готовую сборку из `client/dist` только в production. Во время разработки Vite проксирует
 `/api` и `/media` на сервер.
+
+Публичная галерея использует серверные фильтры и пагинацию. Каждый прицел доступен по постоянному адресу
+`/crosshairs/:id` с отдельными title, description, Open Graph и canonical meta-тегами. Эти страницы также
+добавляются в `sitemap.xml`.
 
 Демонстрационные записи из `server/data/crosshairs.json` импортируются в пустую БД с нулевыми счётчиками.
 
@@ -90,11 +94,13 @@ npm run build --workspace client
 
 ```bash
 npm run check
+npx playwright install chromium
+npm run test:e2e
 npm audit --omit=dev
 docker compose --env-file .env.example config --quiet
 ```
 
-CI выполняет линтер, тесты, сборку, аудит production-зависимостей и сборку Docker-образа.
+CI выполняет линтер, серверные и браузерные E2E-тесты, сборку, аудит production-зависимостей и сборку Docker-образа.
 
 ## Эксплуатация
 

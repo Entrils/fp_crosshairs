@@ -6,4 +6,6 @@ client/dist
 !.env.example
 coverage
 **/coverage
+playwright-report
+test-results
 npm-debug.log*

@@ -37,7 +37,11 @@ describe('production API', () => {
 
   beforeEach(() => {
     repository = {
-      list: vi.fn().mockResolvedValue([item]),
+      list: vi.fn().mockResolvedValue({ items: [item], total: 1, page: 1, limit: 12, totalPages: 1 }),
+      listAll: vi.fn().mockResolvedValue([item]),
+      listTags: vi.fn().mockResolvedValue([{ tag: 'dot', count: 1 }]),
+      listIds: vi.fn().mockResolvedValue([{ id: item.id, createdAt: item.createdAt }]),
+      stats: vi.fn().mockResolvedValue({ total: 1, copies: 0 }),
       find: vi.fn().mockResolvedValue(item),
       create: vi.fn().mockResolvedValue(item),
       update: vi.fn().mockResolvedValue(item),
@@ -108,6 +112,41 @@ describe('production API', () => {
     expect(repository.incrementCopies).toHaveBeenCalledWith('demo')
   })
 
+  it('returns a paginated gallery with server-side filters', async () => {
+    const response = await request(app).get('/api/crosshairs?page=2&limit=6&q=demo&color=white&type=dot&sort=new')
+    expect(response.status).toBe(200)
+    expect(response.body.items).toEqual([item])
+    expect(response.body.tags).toEqual([{ tag: 'dot', count: 1 }])
+    expect(response.body.stats).toEqual({ total: 1, copies: 0 })
+    expect(repository.list).toHaveBeenCalledWith({
+      page: 2,
+      limit: 6,
+      query: 'demo',
+      tag: '',
+      color: 'white',
+      type: 'dot',
+      sort: 'new',
+    })
+  })
+
+  it('serves a dedicated crosshair API and SEO page', async () => {
+    const apiResponse = await request(app).get('/api/crosshairs/demo')
+    expect(apiResponse.status).toBe(200)
+    expect(apiResponse.body.title).toBe('Demo')
+
+    const pageResponse = await request(app).get('/crosshairs/demo')
+    expect(pageResponse.status).toBe(200)
+    expect(pageResponse.text).toContain('<title>Demo — Fragpunk Crosshairs</title>')
+    expect(pageResponse.text).toContain('rel="canonical"')
+    expect(pageResponse.text).toContain('property="og:image"')
+  })
+
+  it('adds crosshair pages to the sitemap', async () => {
+    const response = await request(app).get('/sitemap.xml')
+    expect(response.status).toBe(200)
+    expect(response.text).toContain('https://example.test/crosshairs/demo')
+  })
+
   it('accepts authenticated uploads through the protected API', async () => {
     storage.putScreenshot.mockResolvedValue({ key: 'crosshair-test.webp', url: '/media/crosshair-test.webp' })
     const response = await request(app)
@@ -119,14 +158,14 @@ describe('production API', () => {
       .field('description', '')
       .field('tags', 'dot, white')
       .field('color', 'white')
-      .field('type', '')
+      .field('type', 'cross')
       .attach('screenshot', Buffer.from('mock-image'), 'preview.png')
 
     expect(response.status).toBe(201)
     expect(storage.putScreenshot).toHaveBeenCalled()
     expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({
       color: 'white',
-      type: null,
+      type: 'cross',
     }))
   })
 

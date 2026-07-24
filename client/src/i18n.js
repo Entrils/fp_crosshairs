@@ -23,6 +23,7 @@ const ru = {
     results: 'РЕЗУЛЬТАТОВ', search: 'Поиск по названию или тегу...', popular: 'Популярные', new: 'Новые',
     all: 'Все прицелы', emptyTitle: 'Ничего не найдено', emptyText: 'Попробуйте другой тег или поисковый запрос.',
     reset: 'Сбросить фильтры', retry: 'Попробовать снова', game: 'FRAGPUNK',
+    pagination: 'Страницы галереи', previous: 'Предыдущая страница', next: 'Следующая страница',
   },
   filters: { color: 'Цвет', type: 'Тип', allColors: 'Все цвета', allTypes: 'Все типы', noType: 'Без типа' },
   options: {
@@ -30,11 +31,12 @@ const ru = {
       red: 'Красный', orange: 'Оранжевый', yellow: 'Жёлтый', green: 'Зелёный', blue: 'Синий',
       indigo: 'Индиго', violet: 'Фиолетовый', white: 'Белый', black: 'Чёрный',
     },
-    types: { circle: 'Круг', dot: 'Точка', square: 'Квадрат' },
+    types: { circle: 'Круг', dot: 'Точка', square: 'Квадрат', cross: 'Перекрестие' },
   },
   detail: {
     preview: 'ПРЕДПРОСМОТР / В ИГРЕ', eyebrow: 'КОД ПРИЦЕЛА', fallback: 'Пользовательский прицел для FragPunk.',
     step: 'Скопируйте код', instruction: 'Откройте настройки FragPunk и импортируйте код в разделе прицела.',
+    openPage: 'Открыть отдельную страницу', backGallery: 'Вернуться в галерею',
   },
   guide: {
     index: '02 / БЫСТРЫЙ СТАРТ', title1: 'ОТ КОДА ДО', title2: 'ХЕДШОТА.', subtitle: 'Три шага — и новый прицел уже в игре.',
@@ -97,6 +99,7 @@ const en = {
     results: 'RESULTS', search: 'Search by name or tag...', popular: 'Popular', new: 'New',
     all: 'All crosshairs', emptyTitle: 'Nothing found', emptyText: 'Try another tag or search query.',
     reset: 'Reset filters', retry: 'Try again', game: 'FRAGPUNK',
+    pagination: 'Gallery pages', previous: 'Previous page', next: 'Next page',
   },
   filters: { color: 'Color', type: 'Type', allColors: 'All colors', allTypes: 'All types', noType: 'No type' },
   options: {
@@ -104,11 +107,12 @@ const en = {
       red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', blue: 'Blue',
       indigo: 'Indigo', violet: 'Violet', white: 'White', black: 'Black',
     },
-    types: { circle: 'Circle', dot: 'Dot', square: 'Square' },
+    types: { circle: 'Circle', dot: 'Dot', square: 'Square', cross: 'Crosshair' },
   },
   detail: {
     preview: 'PREVIEW / IN-GAME', eyebrow: 'CROSSHAIR CODE', fallback: 'A custom FragPunk crosshair.',
     step: 'Copy the code', instruction: 'Open FragPunk settings and import the code in the crosshair section.',
+    openPage: 'Open dedicated page', backGallery: 'Back to gallery',
   },
   guide: {
     index: '02 / QUICK START', title1: 'FROM CODE TO', title2: 'HEADSHOT.', subtitle: 'Three steps and your new crosshair is in the game.',
@@ -171,6 +175,7 @@ const de = {
     results: 'ERGEBNISSE', search: 'Nach Name oder Tag suchen...', popular: 'Beliebt', new: 'Neu',
     all: 'Alle Fadenkreuze', emptyTitle: 'Nichts gefunden', emptyText: 'Versuche einen anderen Tag oder Suchbegriff.',
     reset: 'Filter zurücksetzen', retry: 'Erneut versuchen', game: 'FRAGPUNK',
+    pagination: 'Galerieseiten', previous: 'Vorherige Seite', next: 'Nächste Seite',
   },
   filters: { color: 'Farbe', type: 'Typ', allColors: 'Alle Farben', allTypes: 'Alle Typen', noType: 'Ohne Typ' },
   options: {
@@ -178,11 +183,12 @@ const de = {
       red: 'Rot', orange: 'Orange', yellow: 'Gelb', green: 'Grün', blue: 'Blau',
       indigo: 'Indigo', violet: 'Violett', white: 'Weiß', black: 'Schwarz',
     },
-    types: { circle: 'Kreis', dot: 'Punkt', square: 'Quadrat' },
+    types: { circle: 'Kreis', dot: 'Punkt', square: 'Quadrat', cross: 'Fadenkreuz' },
   },
   detail: {
     preview: 'VORSCHAU / IM SPIEL', eyebrow: 'FADENKREUZ-CODE', fallback: 'Ein benutzerdefiniertes FragPunk-Fadenkreuz.',
     step: 'Code kopieren', instruction: 'Öffne die FragPunk-Einstellungen und importiere den Code im Fadenkreuz-Bereich.',
+    openPage: 'Eigene Seite öffnen', backGallery: 'Zurück zur Galerie',
   },
   guide: {
     index: '02 / SCHNELLSTART', title1: 'VOM CODE ZUM', title2: 'HEADSHOT.', subtitle: 'Drei Schritte und dein neues Fadenkreuz ist im Spiel.',
@@ -245,6 +251,7 @@ const fr = {
     results: 'RÉSULTATS', search: 'Rechercher par nom ou tag...', popular: 'Populaires', new: 'Nouveaux',
     all: 'Tous les réticules', emptyTitle: 'Aucun résultat', emptyText: 'Essaie un autre tag ou une autre recherche.',
     reset: 'Réinitialiser', retry: 'Réessayer', game: 'FRAGPUNK',
+    pagination: 'Pages de la galerie', previous: 'Page précédente', next: 'Page suivante',
   },
   filters: { color: 'Couleur', type: 'Type', allColors: 'Toutes les couleurs', allTypes: 'Tous les types', noType: 'Sans type' },
   options: {
@@ -252,11 +259,12 @@ const fr = {
       red: 'Rouge', orange: 'Orange', yellow: 'Jaune', green: 'Vert', blue: 'Bleu',
       indigo: 'Indigo', violet: 'Violet', white: 'Blanc', black: 'Noir',
     },
-    types: { circle: 'Cercle', dot: 'Point', square: 'Carré' },
+    types: { circle: 'Cercle', dot: 'Point', square: 'Carré', cross: 'Croix' },
   },
   detail: {
     preview: 'APERÇU / EN JEU', eyebrow: 'CODE DU RÉTICULE', fallback: 'Un réticule FragPunk personnalisé.',
     step: 'Copie le code', instruction: 'Ouvre les paramètres de FragPunk et importe le code dans la section du réticule.',
+    openPage: 'Ouvrir la page dédiée', backGallery: 'Retour à la galerie',
   },
   guide: {
     index: '02 / DÉMARRAGE RAPIDE', title1: 'DU CODE AU', title2: 'HEADSHOT.', subtitle: 'Trois étapes et ton nouveau réticule est en jeu.',
@@ -319,6 +327,7 @@ const zh = {
     results: '个结果', search: '按名称或标签搜索...', popular: '热门', new: '最新',
     all: '全部准星', emptyTitle: '没有找到结果', emptyText: '请尝试其他标签或搜索词。',
     reset: '重置筛选', retry: '重试', game: '界外狂潮',
+    pagination: '准星库分页', previous: '上一页', next: '下一页',
   },
   filters: { color: '颜色', type: '类型', allColors: '全部颜色', allTypes: '全部类型', noType: '无类型' },
   options: {
@@ -326,11 +335,12 @@ const zh = {
       red: '红色', orange: '橙色', yellow: '黄色', green: '绿色', blue: '蓝色',
       indigo: '靛蓝色', violet: '紫色', white: '白色', black: '黑色',
     },
-    types: { circle: '圆形', dot: '点', square: '方形' },
+    types: { circle: '圆形', dot: '点', square: '方形', cross: '十字' },
   },
   detail: {
     preview: '预览 / 游戏内', eyebrow: '准星代码', fallback: '自定义界外狂潮准星。',
     step: '复制代码', instruction: '打开界外狂潮设置，在准星页面导入代码。',
+    openPage: '打开独立页面', backGallery: '返回准星库',
   },
   guide: {
     index: '02 / 快速开始', title1: '从代码到', title2: '爆头。', subtitle: '只需三步，新准星即可投入游戏。',

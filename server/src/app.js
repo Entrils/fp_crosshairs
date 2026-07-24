@@ -12,7 +12,16 @@ import { passwordMatches } from './session.js'
 const cookieName = 'fragpunk_crosshairs_admin'
 const mediaKeyPattern = /^crosshair-[a-zA-Z0-9-]+\.webp$/
 const crosshairColors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'white', 'black']
-const crosshairTypes = ['circle', 'dot', 'square']
+const crosshairTypes = ['circle', 'dot', 'square', 'cross']
+const galleryQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(24).default(12),
+  q: z.string().trim().max(100).default(''),
+  tag: z.string().trim().max(30).default(''),
+  color: z.enum(['', ...crosshairColors]).default(''),
+  type: z.enum(['', 'none', ...crosshairTypes]).default(''),
+  sort: z.enum(['popular', 'new']).default('popular'),
+})
 const crosshairInput = z.object({
   title: z.string().trim().min(1).max(80),
   code: z.string().trim().min(1).max(4000),
@@ -40,6 +49,13 @@ const log = (level, message, details = {}) => {
   if (level === 'error') console.error(output)
   else console.log(output)
 }
+
+const escapeMarkup = (value) => String(value)
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;')
 
 export const createApp = ({ config, repository, storage, rateLimits, sessionManager, distDir }) => {
   const app = express()
@@ -105,10 +121,20 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     response.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: ${config.PUBLIC_ORIGIN}/sitemap.xml\n`)
   })
 
-  app.get('/sitemap.xml', (_request, response) => {
-    response
-      .type('application/xml')
-      .send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${config.PUBLIC_ORIGIN}/</loc></url></urlset>`)
+  app.get('/sitemap.xml', async (_request, response, next) => {
+    try {
+      const items = await repository.listIds()
+      const urls = [
+        `<url><loc>${escapeMarkup(config.PUBLIC_ORIGIN)}/</loc></url>`,
+        ...items.map((item) =>
+          `<url><loc>${escapeMarkup(config.PUBLIC_ORIGIN)}/crosshairs/${encodeURIComponent(item.id)}</loc><lastmod>${item.createdAt.slice(0, 10)}</lastmod></url>`),
+      ]
+      response.type('application/xml').send(
+        `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`,
+      )
+    } catch (error) {
+      next(error)
+    }
   })
 
   app.get('/healthz', async (_request, response) => {
@@ -124,8 +150,34 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
 
   app.get('/api/crosshairs', async (_request, response, next) => {
     try {
+      const query = galleryQuery.parse(_request.query)
+      const filters = {
+        page: query.page,
+        limit: query.limit,
+        query: query.q,
+        tag: query.tag,
+        color: query.color,
+        type: query.type,
+        sort: query.sort,
+      }
+      const [result, tags, stats] = await Promise.all([
+        repository.list(filters),
+        repository.listTags(),
+        repository.stats(),
+      ])
       response.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
-      response.json(await repository.list())
+      response.json({ ...result, tags, stats })
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/api/crosshairs/:id', async (request, response, next) => {
+    try {
+      const item = await repository.find(request.params.id)
+      if (!item) return response.status(404).json({ code: 'notFound', error: 'Crosshair not found' })
+      response.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
+      response.json(item)
     } catch (error) {
       next(error)
     }
@@ -134,6 +186,15 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
   app.get('/api/admin/session', (request, response) => {
     response.setHeader('Cache-Control', 'no-store')
     response.json({ authenticated: hasSession(request) })
+  })
+
+  app.get('/api/admin/crosshairs', requireAdmin, async (_request, response, next) => {
+    try {
+      response.setHeader('Cache-Control', 'no-store')
+      response.json(await repository.listAll())
+    } catch (error) {
+      next(error)
+    }
   })
 
   app.post('/api/admin/login', requireTrustedMutation, async (request, response, next) => {
@@ -294,6 +355,7 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
 
   if (distDir && fs.existsSync(distDir)) {
     const assetsDir = path.join(distDir, 'assets')
+    const indexTemplate = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8')
     app.use('/assets', express.static(assetsDir, { maxAge: '1y', immutable: true }))
     app.use(express.static(distDir, { index: false, maxAge: '1h' }))
     const sendApp = (request, response) => {
@@ -304,6 +366,35 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     }
     app.get('/', sendApp)
     app.get('/admin', sendApp)
+    app.get('/crosshairs/:id', async (request, response, next) => {
+      try {
+        const item = await repository.find(request.params.id)
+        if (!item) return response.status(404).type('html').send(indexTemplate)
+        const title = escapeMarkup(`${item.title} — Fragpunk Crosshairs`)
+        const description = escapeMarkup(item.description || `FragPunk crosshair code: ${item.title}`)
+        const canonical = `${config.PUBLIC_ORIGIN}/crosshairs/${encodeURIComponent(item.id)}`
+        const image = item.image.startsWith('http') ? item.image : `${config.PUBLIC_ORIGIN}${item.image}`
+        const html = indexTemplate
+          .replace('<title>Fragpunk Crosshairs</title>', `<title>${title}</title>`)
+          .replace(
+            /<meta name="description" content="[^"]*"\s*\/>/,
+            `<meta name="description" content="${description}" />`,
+          )
+          .replace(
+            '<meta property="og:title" content="Fragpunk Crosshairs" />',
+            `<meta property="og:title" content="${title}" />`,
+          )
+          .replace(
+            /<meta property="og:description" content="[^"]*"\s*\/>/,
+            `<meta property="og:description" content="${description}" /><meta property="og:image" content="${escapeMarkup(image)}" /><meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+          )
+          .replace('</head>', `<link rel="canonical" href="${escapeMarkup(canonical)}" /></head>`)
+        response.setHeader('Cache-Control', 'no-store')
+        response.type('html').send(html)
+      } catch (error) {
+        next(error)
+      }
+    })
   }
 
   app.use((request, response) => {
