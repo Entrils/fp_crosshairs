@@ -25,7 +25,7 @@ const ru = {
     reset: 'Сбросить фильтры', retry: 'Попробовать снова', game: 'FRAGPUNK',
     pagination: 'Страницы галереи', previous: 'Предыдущая страница', next: 'Следующая страница',
   },
-  filters: { color: 'Цвет', type: 'Тип', allColors: 'Все цвета', allTypes: 'Все типы', noType: 'Без типа' },
+  filters: { color: 'Цвет', type: 'Тип', allColors: 'Все цвета', allTypes: 'Все типы', noType: 'Другое' },
   options: {
     colors: {
       red: 'Красный', orange: 'Оранжевый', yellow: 'Жёлтый', green: 'Зелёный', blue: 'Синий',
@@ -101,7 +101,7 @@ const en = {
     reset: 'Reset filters', retry: 'Try again', game: 'FRAGPUNK',
     pagination: 'Gallery pages', previous: 'Previous page', next: 'Next page',
   },
-  filters: { color: 'Color', type: 'Type', allColors: 'All colors', allTypes: 'All types', noType: 'No type' },
+  filters: { color: 'Color', type: 'Type', allColors: 'All colors', allTypes: 'All types', noType: 'Other' },
   options: {
     colors: {
       red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', blue: 'Blue',
@@ -177,7 +177,7 @@ const de = {
     reset: 'Filter zurücksetzen', retry: 'Erneut versuchen', game: 'FRAGPUNK',
     pagination: 'Galerieseiten', previous: 'Vorherige Seite', next: 'Nächste Seite',
   },
-  filters: { color: 'Farbe', type: 'Typ', allColors: 'Alle Farben', allTypes: 'Alle Typen', noType: 'Ohne Typ' },
+  filters: { color: 'Farbe', type: 'Typ', allColors: 'Alle Farben', allTypes: 'Alle Typen', noType: 'Sonstiges' },
   options: {
     colors: {
       red: 'Rot', orange: 'Orange', yellow: 'Gelb', green: 'Grün', blue: 'Blau',
@@ -253,7 +253,7 @@ const fr = {
     reset: 'Réinitialiser', retry: 'Réessayer', game: 'FRAGPUNK',
     pagination: 'Pages de la galerie', previous: 'Page précédente', next: 'Page suivante',
   },
-  filters: { color: 'Couleur', type: 'Type', allColors: 'Toutes les couleurs', allTypes: 'Tous les types', noType: 'Sans type' },
+  filters: { color: 'Couleur', type: 'Type', allColors: 'Toutes les couleurs', allTypes: 'Tous les types', noType: 'Autre' },
   options: {
     colors: {
       red: 'Rouge', orange: 'Orange', yellow: 'Jaune', green: 'Vert', blue: 'Bleu',
@@ -329,7 +329,7 @@ const zh = {
     reset: '重置筛选', retry: '重试', game: '界外狂潮',
     pagination: '准星库分页', previous: '上一页', next: '下一页',
   },
-  filters: { color: '颜色', type: '类型', allColors: '全部颜色', allTypes: '全部类型', noType: '无类型' },
+  filters: { color: '颜色', type: '类型', allColors: '全部颜色', allTypes: '全部类型', noType: '其他' },
   options: {
     colors: {
       red: '红色', orange: '橙色', yellow: '黄色', green: '绿色', blue: '蓝色',

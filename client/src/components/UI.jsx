@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { languages } from '../i18n'
-import { typeOptions } from '../lib/api'
+import { colorOptions, typeOptions } from '../lib/api'
 
 export const Icon = ({ name, size = 20 }) => {
   const paths = {
@@ -122,6 +122,133 @@ export function TypeSelect({
                 {option === selectedValue && <Icon name="check" size={15} />}
               </button>
             ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const hueColors = [
+  { name: 'red', angle: 0 },
+  { name: 'orange', angle: 30 },
+  { name: 'yellow', angle: 60 },
+  { name: 'green', angle: 120 },
+  { name: 'blue', angle: 215 },
+  { name: 'indigo', angle: 245 },
+  { name: 'violet', angle: 280 },
+]
+
+const circularDistance = (first, second) => {
+  const distance = Math.abs(first - second)
+  return Math.min(distance, 360 - distance)
+}
+
+export function ColorWheelSelect({ label, value = 'all', onValueChange }) {
+  const { t } = useTranslation()
+  const rootRef = useRef(null)
+  const [open, setOpen] = useState(false)
+  const selectedHue = hueColors.find(({ name }) => name === value)
+  const optionLabel = (option) => option === 'all'
+    ? t('filters.allColors')
+    : t(`options.colors.${option}`)
+
+  useEffect(() => {
+    if (!open) return undefined
+    const closeOutside = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false)
+    }
+    const closeWithKeyboard = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('pointerdown', closeOutside)
+    window.addEventListener('keydown', closeWithKeyboard)
+    return () => {
+      window.removeEventListener('pointerdown', closeOutside)
+      window.removeEventListener('keydown', closeWithKeyboard)
+    }
+  }, [open])
+
+  const choose = (option) => {
+    onValueChange?.(option)
+    setOpen(false)
+  }
+
+  const chooseFromWheel = (event) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const x = event.clientX - bounds.left - (bounds.width / 2)
+    const y = event.clientY - bounds.top - (bounds.height / 2)
+    const angle = (Math.atan2(y, x) * (180 / Math.PI) + 360) % 360
+    const closest = hueColors.reduce((nearest, option) => (
+      circularDistance(angle, option.angle) < circularDistance(angle, nearest.angle)
+        ? option
+        : nearest
+    ))
+    choose(closest.name)
+  }
+
+  const wheelStyle = selectedHue
+    ? {
+        '--picker-x': `${50 + Math.cos(selectedHue.angle * Math.PI / 180) * 40}%`,
+        '--picker-y': `${50 + Math.sin(selectedHue.angle * Math.PI / 180) * 40}%`,
+      }
+    : undefined
+
+  return (
+    <div className="color-wheel-field">
+      <span>{label}</span>
+      <div className={`color-wheel-select ${open ? 'open' : ''}`} ref={rootRef}>
+        <button
+          type="button"
+          className="color-wheel-select__button"
+          aria-label={`${label}: ${optionLabel(value)}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <i className={value === 'all' ? 'color-swatch color-swatch--spectrum' : `color-swatch color-swatch--${value}`} />
+          <strong>{optionLabel(value)}</strong>
+          <Icon name="chevron" size={14} />
+        </button>
+        {open && (
+          <div className="color-wheel-select__menu" role="dialog" aria-label={label}>
+            <button
+              type="button"
+              className="color-wheel__disc"
+              style={wheelStyle}
+              onClick={chooseFromWheel}
+              aria-label={optionLabel(selectedHue?.name || 'red')}
+            >
+              {selectedHue && <i className="color-wheel__picker" />}
+            </button>
+            <div className="color-wheel__hues">
+              {hueColors.map(({ name }) => (
+                <button
+                  type="button"
+                  className={value === name ? 'active' : ''}
+                  aria-label={optionLabel(name)}
+                  aria-pressed={value === name}
+                  key={name}
+                  onClick={() => choose(name)}
+                >
+                  <i className={`color-swatch color-swatch--${name}`} />
+                </button>
+              ))}
+            </div>
+            <div className="color-wheel__neutrals">
+              {['all', ...colorOptions.filter((color) => color === 'white' || color === 'black')].map((option) => (
+                <button
+                  type="button"
+                  className={value === option ? 'active' : ''}
+                  key={option}
+                  onClick={() => choose(option)}
+                >
+                  <i className={option === 'all' ? 'color-swatch color-swatch--spectrum' : `color-swatch color-swatch--${option}`} />
+                  <span>{optionLabel(option)}</span>
+                  {value === option && <Icon name="check" size={14} />}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

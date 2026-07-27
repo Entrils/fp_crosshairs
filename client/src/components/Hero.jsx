@@ -6,13 +6,42 @@ import { Icon } from './UI'
 const HeroScene = lazy(() => import('../HeroScene'))
 
 const DesktopHeroScene = () => {
-  const [enabled, setEnabled] = useState(() => window.matchMedia('(min-width: 651px)').matches)
+  const [enabled, setEnabled] = useState(false)
 
   useEffect(() => {
-    const media = window.matchMedia('(min-width: 651px)')
-    const update = () => setEnabled(media.matches)
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
+    const desktop = window.matchMedia('(min-width: 651px)')
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const connection = navigator.connection
+    let idleId
+    let timeoutId
+
+    const cancelPending = () => {
+      if (idleId && window.cancelIdleCallback) window.cancelIdleCallback(idleId)
+      if (timeoutId) window.clearTimeout(timeoutId)
+      idleId = undefined
+      timeoutId = undefined
+    }
+
+    const update = () => {
+      cancelPending()
+      setEnabled(false)
+      const constrainedDevice = connection?.saveData || (navigator.deviceMemory && navigator.deviceMemory <= 2)
+      if (!desktop.matches || reducedMotion.matches || constrainedDevice) return
+      const show = () => setEnabled(true)
+      if (window.requestIdleCallback) idleId = window.requestIdleCallback(show, { timeout: 1500 })
+      else timeoutId = window.setTimeout(show, 500)
+    }
+
+    update()
+    desktop.addEventListener('change', update)
+    reducedMotion.addEventListener('change', update)
+    connection?.addEventListener?.('change', update)
+    return () => {
+      cancelPending()
+      desktop.removeEventListener('change', update)
+      reducedMotion.removeEventListener('change', update)
+      connection?.removeEventListener?.('change', update)
+    }
   }, [])
 
   if (!enabled) return null

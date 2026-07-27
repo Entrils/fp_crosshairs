@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "src"
+  ],
+  "ext": "js",
+  "ignore": [
+    "data/**",
+    "tests/**",
+    "../client/**"
+  ],
+  "delay": 300,
+  "signal": "SIGTERM",
+  "exec": "node --env-file=../.env src/index.js"
+}

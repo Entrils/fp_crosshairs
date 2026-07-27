@@ -24,9 +24,26 @@ const start = async () => {
       ? { rejectUnauthorized: config.DATABASE_SSL_REJECT_UNAUTHORIZED }
       : false,
   })
-  const redis = createClient({ url: config.REDIS_URL })
+  const redis = createClient({
+    url: config.REDIS_URL,
+    socket: {
+      connectTimeout: 5_000,
+      reconnectStrategy: (retries) => {
+        if (retries >= 3) {
+          return new Error('Redis is unavailable after 3 connection retries')
+        }
+        return Math.min(250 * (2 ** retries), 1_000)
+      },
+    },
+  })
   redis.on('error', (error) => {
-    console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: 'error', message: 'Redis error', error: error.message }))
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: 'error',
+      message: 'Redis error',
+      error: error.message || error.errors?.[0]?.message || error.name,
+      code: error.code || error.errors?.[0]?.code,
+    }))
   })
   await redis.connect()
 

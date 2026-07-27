@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { colorOptions, fetchGallery, formatCopies } from '../lib/api'
+import { fetchGallery, formatCopies } from '../lib/api'
 import CrosshairModal from './CrosshairModal'
-import { CrosshairAttributes, Icon, TypeSelect } from './UI'
+import { ColorWheelSelect, CrosshairAttributes, Icon, TypeSelect } from './UI'
 
 const MotionEffects = lazy(() => import('../MotionEffects'))
 
@@ -76,7 +76,6 @@ export default function Gallery({ onCopy, onStatsChange }) {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       setDebouncedQuery(query.trim())
-      setPage(1)
     }, 250)
     return () => window.clearTimeout(timeout)
   }, [query])
@@ -145,20 +144,18 @@ export default function Gallery({ onCopy, onStatsChange }) {
         </div>
 
         <div className="toolbar">
-          <label className="search"><Icon name="search" size={19} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('gallery.search')} /><kbd>⌘ K</kbd></label>
+          <label className="search"><Icon name="search" size={19} /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1) }} placeholder={t('gallery.search')} /><kbd>⌘ K</kbd></label>
           <div className="sort-switch">
             <button className={sort === 'popular' ? 'active' : ''} onClick={() => changeFilter(setSort)('popular')}>{t('gallery.popular')}</button>
             <button className={sort === 'new' ? 'active' : ''} onClick={() => changeFilter(setSort)('new')}>{t('gallery.new')}</button>
           </div>
         </div>
         <div className="attribute-filters">
-          <label>
-            <span>{t('filters.color')}</span>
-            <select value={selectedColor} onChange={changeFilter(setSelectedColor)}>
-              <option value="all">{t('filters.allColors')}</option>
-              {colorOptions.map((color) => <option value={color} key={color}>{t(`options.colors.${color}`)}</option>)}
-            </select>
-          </label>
+          <ColorWheelSelect
+            label={t('filters.color')}
+            value={selectedColor}
+            onValueChange={changeFilter(setSelectedColor)}
+          />
           <TypeSelect
             label={t('filters.type')}
             value={selectedType}
