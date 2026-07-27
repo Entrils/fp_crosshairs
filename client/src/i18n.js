@@ -12,7 +12,7 @@ export const languages = [
 const ru = {
   nav: { crosshairs: 'Прицелы', install: 'Как установить', admin: 'Администратор' },
   language: { label: 'Язык сайта' },
-  common: { copy: 'Копировать', copied: 'Готово', copyCode: 'Копировать код', copiedCode: 'Скопировано', close: 'Закрыть' },
+  common: { copy: 'Копировать', copied: 'Готово', copyCode: 'Копировать код', copiedCode: 'Скопировано', close: 'Закрыть', addFavorite: 'В избранное', removeFavorite: 'Убрать из избранного', share: 'Поделиться' },
   hero: {
     kicker: 'БАЗА ПРИЦЕЛОВ FRAGPUNK', title: 'ТОЧКА', accent: 'РЕШАЕТ.',
     line1: 'Коллекция лучших прицелов для FragPunk.', line2: 'Выбирай, копируй код и забирай раунд.',
@@ -36,8 +36,9 @@ const ru = {
   detail: {
     preview: 'ПРЕДПРОСМОТР / В ИГРЕ', eyebrow: 'КОД ПРИЦЕЛА', fallback: 'Пользовательский прицел для FragPunk.',
     step: 'Скопируйте код', instruction: 'Откройте настройки FragPunk и импортируйте код в разделе прицела.',
-    openPage: 'Открыть отдельную страницу', backGallery: 'Вернуться в галерею',
+    openPage: 'Открыть отдельную страницу', backGallery: 'Вернуться в галерею', related: 'Похожие прицелы', relatedIndex: 'ПОХОЖИЕ',
   },
+  library: { index: '02 / ВАША КОЛЛЕКЦИЯ', title: 'СОХРАНЁННОЕ', subtitle: 'Избранные и недавно просмотренные прицелы хранятся только в этом браузере.', favorites: 'Избранное', recent: 'Недавние', noFavorites: 'Добавьте прицелы сердечком.', noRecent: 'Здесь появятся просмотренные прицелы.' },
   guide: {
     index: '02 / БЫСТРЫЙ СТАРТ', title1: 'ОТ КОДА ДО', title2: 'ХЕДШОТА.', subtitle: 'Три шага — и новый прицел уже в игре.',
     copyTitle: 'Скопируй код', copyText: 'Выбери прицел в галерее и нажми кнопку копирования.',
@@ -58,8 +59,12 @@ const ru = {
     uploadTitle: 'Загрузите скриншот', uploadHint: 'JPG, PNG или WEBP · до 8 МБ', replace: 'Нажмите, чтобы заменить',
     uploading: 'Загружаем...', publish: 'Опубликовать прицел', deleteConfirm: 'Удалить «{{title}}»?', delete: 'Удалить {{title}}',
     edit: 'Редактировать {{title}}', saving: 'Сохраняем...', saveChanges: 'Сохранить изменения', cancel: 'Отмена',
+    status: 'Статус', statusPublished: 'Опубликован', statusDraft: 'Черновик', featured: 'Показывать как рекомендуемый', featuredShort: 'рекомендуемый',
+    total: 'Всего', published: 'Опубликовано', drafts: 'Черновиков', totalCopies: 'Копирований', last14Days: 'Копирования за 14 дней',
+    search: 'Поиск по названию или тегу', sort: 'Сортировка', sortUpdated: 'Недавно изменённые', sortCopies: 'По копированиям', sortName: 'По названию',
+    copiesShort: 'копий', noMatches: 'По вашему запросу ничего не найдено.',
   },
-  toast: { copied: 'Код прицела скопирован', published: 'Прицел опубликован', updated: 'Изменения сохранены' },
+  toast: { copied: 'Код прицела скопирован', published: 'Прицел сохранён', updated: 'Изменения сохранены', deleted: 'Прицел удалён', shared: 'Ссылка готова' },
   footer: { disclaimer: 'Независимый фанатский проект. Не связан с Bad Guitar Studio или NetEase Games.' },
   seed: {
     'neon-precision': 'Тонкий статичный крест для точных одиночных выстрелов.',
@@ -88,7 +93,7 @@ const ru = {
 const en = {
   nav: { crosshairs: 'Crosshairs', install: 'How to install', admin: 'Administrator' },
   language: { label: 'Site language' },
-  common: { copy: 'Copy', copied: 'Done', copyCode: 'Copy code', copiedCode: 'Copied', close: 'Close' },
+  common: { copy: 'Copy', copied: 'Done', copyCode: 'Copy code', copiedCode: 'Copied', close: 'Close', addFavorite: 'Add to favorites', removeFavorite: 'Remove from favorites', share: 'Share' },
   hero: {
     kicker: 'FRAGPUNK CROSSHAIR DATABASE', title: 'ONE DOT', accent: 'DECIDES.',
     line1: 'A collection of the best FragPunk crosshairs.', line2: 'Choose, copy the code, and take the round.',
@@ -112,8 +117,9 @@ const en = {
   detail: {
     preview: 'PREVIEW / IN-GAME', eyebrow: 'CROSSHAIR CODE', fallback: 'A custom FragPunk crosshair.',
     step: 'Copy the code', instruction: 'Open FragPunk settings and import the code in the crosshair section.',
-    openPage: 'Open dedicated page', backGallery: 'Back to gallery',
+    openPage: 'Open dedicated page', backGallery: 'Back to gallery', related: 'Related crosshairs', relatedIndex: 'RELATED',
   },
+  library: { index: '02 / YOUR COLLECTION', title: 'SAVED', subtitle: 'Favorites and recently viewed crosshairs stay in this browser.', favorites: 'Favorites', recent: 'Recently viewed', noFavorites: 'Save crosshairs with the heart button.', noRecent: 'Viewed crosshairs will appear here.' },
   guide: {
     index: '02 / QUICK START', title1: 'FROM CODE TO', title2: 'HEADSHOT.', subtitle: 'Three steps and your new crosshair is in the game.',
     copyTitle: 'Copy the code', copyText: 'Choose a crosshair in the gallery and hit the copy button.',
@@ -134,8 +140,12 @@ const en = {
     uploadTitle: 'Upload a screenshot', uploadHint: 'JPG, PNG or WEBP · up to 8 MB', replace: 'Click to replace',
     uploading: 'Uploading...', publish: 'Publish crosshair', deleteConfirm: 'Delete “{{title}}”?', delete: 'Delete {{title}}',
     edit: 'Edit {{title}}', saving: 'Saving...', saveChanges: 'Save changes', cancel: 'Cancel',
+    status: 'Status', statusPublished: 'Published', statusDraft: 'Draft', featured: 'Feature this crosshair', featuredShort: 'featured',
+    total: 'Total', published: 'Published', drafts: 'Drafts', totalCopies: 'Copies', last14Days: 'Copies over 14 days',
+    search: 'Search by name or tag', sort: 'Sort', sortUpdated: 'Recently updated', sortCopies: 'Most copied', sortName: 'Name',
+    copiesShort: 'copies', noMatches: 'No crosshairs match your search.',
   },
-  toast: { copied: 'Crosshair code copied', published: 'Crosshair published', updated: 'Changes saved' },
+  toast: { copied: 'Crosshair code copied', published: 'Crosshair saved', updated: 'Changes saved', deleted: 'Crosshair deleted', shared: 'Link ready to share' },
   footer: { disclaimer: 'An independent fan project. Not affiliated with Bad Guitar Studio or NetEase Games.' },
   seed: {
     'neon-precision': 'A thin static cross for precise single shots.',
@@ -164,7 +174,7 @@ const en = {
 const de = {
   nav: { crosshairs: 'Fadenkreuze', install: 'Installation', admin: 'Administrator' },
   language: { label: 'Seitensprache' },
-  common: { copy: 'Kopieren', copied: 'Fertig', copyCode: 'Code kopieren', copiedCode: 'Kopiert', close: 'Schließen' },
+  common: { copy: 'Kopieren', copied: 'Fertig', copyCode: 'Code kopieren', copiedCode: 'Kopiert', close: 'Schließen', addFavorite: 'Zu Favoriten', removeFavorite: 'Aus Favoriten entfernen', share: 'Teilen' },
   hero: {
     kicker: 'FRAGPUNK-FADENKREUZ-DATENBANK', title: 'EIN PUNKT', accent: 'ENTSCHEIDET.',
     line1: 'Eine Sammlung der besten FragPunk-Fadenkreuze.', line2: 'Auswählen, Code kopieren und die Runde holen.',
@@ -188,8 +198,9 @@ const de = {
   detail: {
     preview: 'VORSCHAU / IM SPIEL', eyebrow: 'FADENKREUZ-CODE', fallback: 'Ein benutzerdefiniertes FragPunk-Fadenkreuz.',
     step: 'Code kopieren', instruction: 'Öffne die FragPunk-Einstellungen und importiere den Code im Fadenkreuz-Bereich.',
-    openPage: 'Eigene Seite öffnen', backGallery: 'Zurück zur Galerie',
+    openPage: 'Eigene Seite öffnen', backGallery: 'Zurück zur Galerie', related: 'Ähnliche Fadenkreuze', relatedIndex: 'ÄHNLICH',
   },
+  library: { index: '02 / DEINE SAMMLUNG', title: 'GESPEICHERT', subtitle: 'Favoriten und zuletzt angesehene Fadenkreuze bleiben in diesem Browser.', favorites: 'Favoriten', recent: 'Zuletzt angesehen', noFavorites: 'Speichere Fadenkreuze mit dem Herz.', noRecent: 'Angesehene Fadenkreuze erscheinen hier.' },
   guide: {
     index: '02 / SCHNELLSTART', title1: 'VOM CODE ZUM', title2: 'HEADSHOT.', subtitle: 'Drei Schritte und dein neues Fadenkreuz ist im Spiel.',
     copyTitle: 'Code kopieren', copyText: 'Wähle ein Fadenkreuz in der Galerie und klicke auf Kopieren.',
@@ -210,8 +221,12 @@ const de = {
     uploadTitle: 'Screenshot hochladen', uploadHint: 'JPG, PNG oder WEBP · bis 8 MB', replace: 'Zum Ersetzen klicken',
     uploading: 'Wird hochgeladen...', publish: 'Fadenkreuz veröffentlichen', deleteConfirm: '„{{title}}“ löschen?', delete: '{{title}} löschen',
     edit: '{{title}} bearbeiten', saving: 'Wird gespeichert...', saveChanges: 'Änderungen speichern', cancel: 'Abbrechen',
+    status: 'Status', statusPublished: 'Veröffentlicht', statusDraft: 'Entwurf', featured: 'Als Empfehlung anzeigen', featuredShort: 'empfohlen',
+    total: 'Gesamt', published: 'Veröffentlicht', drafts: 'Entwürfe', totalCopies: 'Kopien', last14Days: 'Kopien in 14 Tagen',
+    search: 'Nach Name oder Tag suchen', sort: 'Sortierung', sortUpdated: 'Zuletzt geändert', sortCopies: 'Meiste Kopien', sortName: 'Name',
+    copiesShort: 'Kopien', noMatches: 'Keine passenden Fadenkreuze gefunden.',
   },
-  toast: { copied: 'Fadenkreuz-Code kopiert', published: 'Fadenkreuz veröffentlicht', updated: 'Änderungen gespeichert' },
+  toast: { copied: 'Fadenkreuz-Code kopiert', published: 'Fadenkreuz gespeichert', updated: 'Änderungen gespeichert', deleted: 'Fadenkreuz gelöscht', shared: 'Link ist bereit' },
   footer: { disclaimer: 'Ein unabhängiges Fanprojekt. Nicht mit Bad Guitar Studio oder NetEase Games verbunden.' },
   seed: {
     'neon-precision': 'Ein dünnes statisches Kreuz für präzise Einzelschüsse.',
@@ -240,7 +255,7 @@ const de = {
 const fr = {
   nav: { crosshairs: 'Réticules', install: 'Installation', admin: 'Administrateur' },
   language: { label: 'Langue du site' },
-  common: { copy: 'Copier', copied: 'Terminé', copyCode: 'Copier le code', copiedCode: 'Copié', close: 'Fermer' },
+  common: { copy: 'Copier', copied: 'Terminé', copyCode: 'Copier le code', copiedCode: 'Copié', close: 'Fermer', addFavorite: 'Ajouter aux favoris', removeFavorite: 'Retirer des favoris', share: 'Partager' },
   hero: {
     kicker: 'BASE DE RÉTICULES FRAGPUNK', title: 'UN POINT', accent: 'DÉCIDE.',
     line1: 'Une collection des meilleurs réticules FragPunk.', line2: 'Choisis, copie le code et remporte la manche.',
@@ -264,8 +279,9 @@ const fr = {
   detail: {
     preview: 'APERÇU / EN JEU', eyebrow: 'CODE DU RÉTICULE', fallback: 'Un réticule FragPunk personnalisé.',
     step: 'Copie le code', instruction: 'Ouvre les paramètres de FragPunk et importe le code dans la section du réticule.',
-    openPage: 'Ouvrir la page dédiée', backGallery: 'Retour à la galerie',
+    openPage: 'Ouvrir la page dédiée', backGallery: 'Retour à la galerie', related: 'Réticules similaires', relatedIndex: 'SIMILAIRES',
   },
+  library: { index: '02 / VOTRE COLLECTION', title: 'ENREGISTRÉS', subtitle: 'Les favoris et les réticules récents restent dans ce navigateur.', favorites: 'Favoris', recent: 'Consultés récemment', noFavorites: 'Ajoutez des réticules avec le cœur.', noRecent: 'Les réticules consultés apparaîtront ici.' },
   guide: {
     index: '02 / DÉMARRAGE RAPIDE', title1: 'DU CODE AU', title2: 'HEADSHOT.', subtitle: 'Trois étapes et ton nouveau réticule est en jeu.',
     copyTitle: 'Copie le code', copyText: 'Choisis un réticule dans la galerie et clique sur Copier.',
@@ -286,8 +302,12 @@ const fr = {
     uploadTitle: 'Importer une capture', uploadHint: 'JPG, PNG ou WEBP · 8 Mo max.', replace: 'Cliquer pour remplacer',
     uploading: 'Importation...', publish: 'Publier le réticule', deleteConfirm: 'Supprimer « {{title}} » ?', delete: 'Supprimer {{title}}',
     edit: 'Modifier {{title}}', saving: 'Enregistrement...', saveChanges: 'Enregistrer', cancel: 'Annuler',
+    status: 'Statut', statusPublished: 'Publié', statusDraft: 'Brouillon', featured: 'Mettre ce réticule en avant', featuredShort: 'recommandé',
+    total: 'Total', published: 'Publiés', drafts: 'Brouillons', totalCopies: 'Copies', last14Days: 'Copies sur 14 jours',
+    search: 'Rechercher par nom ou tag', sort: 'Tri', sortUpdated: 'Modifiés récemment', sortCopies: 'Plus copiés', sortName: 'Nom',
+    copiesShort: 'copies', noMatches: 'Aucun réticule ne correspond.',
   },
-  toast: { copied: 'Code du réticule copié', published: 'Réticule publié', updated: 'Modifications enregistrées' },
+  toast: { copied: 'Code du réticule copié', published: 'Réticule enregistré', updated: 'Modifications enregistrées', deleted: 'Réticule supprimé', shared: 'Lien prêt à partager' },
   footer: { disclaimer: 'Projet de fans indépendant. Sans affiliation avec Bad Guitar Studio ou NetEase Games.' },
   seed: {
     'neon-precision': 'Une fine croix statique pour des tirs uniques précis.',
@@ -316,7 +336,7 @@ const fr = {
 const zh = {
   nav: { crosshairs: '准星', install: '安装方法', admin: '管理员' },
   language: { label: '网站语言' },
-  common: { copy: '复制', copied: '完成', copyCode: '复制代码', copiedCode: '已复制', close: '关闭' },
+  common: { copy: '复制', copied: '完成', copyCode: '复制代码', copiedCode: '已复制', close: '关闭', addFavorite: '加入收藏', removeFavorite: '取消收藏', share: '分享' },
   hero: {
     kicker: '界外狂潮准星数据库', title: '一点', accent: '定胜负。',
     line1: '精选界外狂潮优质准星。', line2: '选择、复制代码，赢下这一局。',
@@ -340,8 +360,9 @@ const zh = {
   detail: {
     preview: '预览 / 游戏内', eyebrow: '准星代码', fallback: '自定义界外狂潮准星。',
     step: '复制代码', instruction: '打开界外狂潮设置，在准星页面导入代码。',
-    openPage: '打开独立页面', backGallery: '返回准星库',
+    openPage: '打开独立页面', backGallery: '返回准星库', related: '相似准星', relatedIndex: '相似',
   },
+  library: { index: '02 / 我的收藏', title: '已保存', subtitle: '收藏和最近浏览的准星仅保存在此浏览器中。', favorites: '收藏', recent: '最近浏览', noFavorites: '点击心形按钮收藏准星。', noRecent: '浏览过的准星会显示在这里。' },
   guide: {
     index: '02 / 快速开始', title1: '从代码到', title2: '爆头。', subtitle: '只需三步，新准星即可投入游戏。',
     copyTitle: '复制代码', copyText: '在画廊中选择准星并点击复制按钮。',
@@ -362,8 +383,12 @@ const zh = {
     uploadTitle: '上传截图', uploadHint: 'JPG、PNG 或 WEBP · 最大 8 MB', replace: '点击替换',
     uploading: '正在上传...', publish: '发布准星', deleteConfirm: '删除“{{title}}”？', delete: '删除 {{title}}',
     edit: '编辑 {{title}}', saving: '正在保存...', saveChanges: '保存修改', cancel: '取消',
+    status: '状态', statusPublished: '已发布', statusDraft: '草稿', featured: '设为推荐准星', featuredShort: '推荐',
+    total: '总数', published: '已发布', drafts: '草稿', totalCopies: '复制次数', last14Days: '最近14天复制',
+    search: '按名称或标签搜索', sort: '排序', sortUpdated: '最近修改', sortCopies: '复制最多', sortName: '名称',
+    copiesShort: '次复制', noMatches: '没有符合搜索条件的准星。',
   },
-  toast: { copied: '准星代码已复制', published: '准星已发布', updated: '修改已保存' },
+  toast: { copied: '准星代码已复制', published: '准星已保存', updated: '修改已保存', deleted: '准星已删除', shared: '分享链接已准备好' },
   footer: { disclaimer: '独立粉丝项目，与 Bad Guitar Studio 或网易游戏无关。' },
   seed: {
     'neon-precision': '细窄的静态十字，适合精准点射。',

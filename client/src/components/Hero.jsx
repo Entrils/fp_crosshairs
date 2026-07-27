@@ -74,7 +74,7 @@ export default function Hero({ stats }) {
         <i />
         <span>CALIBRATED 01</span>
       </div>
-      <span className="hero__side-text">AIM / CLICK / REPEAT</span>
+      <span className="hero__side-text" aria-hidden="true">AIM / CLICK / REPEAT</span>
     </section>
   )
 }

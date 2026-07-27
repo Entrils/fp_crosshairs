@@ -25,3 +25,13 @@ export const formatCopies = (value) => {
   if (value >= 1000) return `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k`
   return value
 }
+
+export const responsiveImageProps = (item, variant = 'full', sizes) => {
+  const images = item.images
+  const props = { src: images?.[variant] || item.image }
+  if (images?.srcSet) {
+    props.srcSet = images.srcSet
+    if (sizes) props.sizes = sizes
+  }
+  return props
+}

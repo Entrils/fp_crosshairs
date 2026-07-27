@@ -17,6 +17,7 @@ COPY --from=build --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/server/package.json ./server/package.json
 COPY --from=build --chown=app:app /app/server/src ./server/src
 COPY --from=build --chown=app:app /app/server/data ./server/data
+COPY --from=build --chown=app:app /app/server/migrations ./server/migrations
 COPY --from=build --chown=app:app /app/client/dist ./client/dist
 USER app
 EXPOSE 4173

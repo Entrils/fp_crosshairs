@@ -22,6 +22,13 @@ const galleryQuery = z.object({
   type: z.enum(['', 'none', ...crosshairTypes]).default(''),
   sort: z.enum(['popular', 'new']).default('popular'),
 })
+const libraryQuery = z.object({
+  ids: z.string().max(2000).default('').transform((value) =>
+    [...new Set(value.split(',').map((id) => id.trim()).filter(Boolean))]
+      .filter((id) => id.length <= 100)
+      .slice(0, 20),
+  ),
+})
 const crosshairInput = z.object({
   title: z.string().trim().min(1).max(80),
   code: z.string().trim().min(1).max(4000),
@@ -31,6 +38,11 @@ const crosshairInput = z.object({
     (value) => value == null || value === '' ? null : value,
     z.enum(crosshairTypes).nullable(),
   ),
+  status: z.enum(['draft', 'published']).default('published'),
+  featured: z.preprocess(
+    (value) => value === true || value === 'true' || value === 'on',
+    z.boolean(),
+  ).default(false),
   tags: z.string().default('').transform((value) =>
     [...new Set(value.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean))]
       .filter((tag) => tag.length <= 30)
@@ -127,7 +139,7 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
       const urls = [
         `<url><loc>${escapeMarkup(config.PUBLIC_ORIGIN)}/</loc></url>`,
         ...items.map((item) =>
-          `<url><loc>${escapeMarkup(config.PUBLIC_ORIGIN)}/crosshairs/${encodeURIComponent(item.id)}</loc><lastmod>${item.createdAt.slice(0, 10)}</lastmod></url>`),
+          `<url><loc>${escapeMarkup(config.PUBLIC_ORIGIN)}/crosshairs/${encodeURIComponent(item.id)}</loc><lastmod>${item.updatedAt.slice(0, 10)}</lastmod></url>`),
       ]
       response.type('application/xml').send(
         `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.join('')}</urlset>`,
@@ -172,6 +184,27 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     }
   })
 
+  app.get('/api/crosshairs/batch', async (request, response, next) => {
+    try {
+      const { ids } = libraryQuery.parse(request.query)
+      response.setHeader('Cache-Control', 'private, max-age=30')
+      response.json({ items: await repository.findMany(ids) })
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/api/crosshairs/:id/related', async (request, response, next) => {
+    try {
+      const item = await repository.find(request.params.id)
+      if (!item) return response.status(404).json({ code: 'notFound', error: 'Crosshair not found' })
+      response.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300')
+      response.json({ items: await repository.related(request.params.id, 4) })
+    } catch (error) {
+      next(error)
+    }
+  })
+
   app.get('/api/crosshairs/:id', async (request, response, next) => {
     try {
       const item = await repository.find(request.params.id)
@@ -192,6 +225,15 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     try {
       response.setHeader('Cache-Control', 'no-store')
       response.json(await repository.listAll())
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  app.get('/api/admin/stats', requireAdmin, async (_request, response, next) => {
+    try {
+      response.setHeader('Cache-Control', 'no-store')
+      response.json(await repository.adminStats())
     } catch (error) {
       next(error)
     }
@@ -263,7 +305,7 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
       let replacementImage
       let committed = false
       try {
-        const existing = await repository.find(request.params.id)
+        const existing = await repository.find(request.params.id, { includeDrafts: true })
         if (!existing) return response.status(404).json({ code: 'notFound', error: 'Crosshair not found' })
 
         const parsed = crosshairInput.parse(request.body)

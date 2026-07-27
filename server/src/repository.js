@@ -1,20 +1,28 @@
 import fs from 'node:fs/promises'
+import { imageVariantsFromUrl } from './image-variants.js'
 
-const mapCrosshair = (row) => ({
-  id: row.id,
-  title: row.title,
-  code: row.code,
-  description: row.description || '',
-  tags: row.tags || [],
-  color: row.color || '',
-  type: row.crosshair_type || '',
-  image: row.image_url,
-  copies: Number(row.copies || 0),
-  createdAt: new Date(row.created_at).toISOString(),
-})
+const mapCrosshair = (row) => {
+  const images = imageVariantsFromUrl(row.image_url)
+  return {
+    id: row.id,
+    title: row.title,
+    code: row.code,
+    description: row.description || '',
+    tags: row.tags || [],
+    color: row.color || '',
+    type: row.crosshair_type || '',
+    image: images.full,
+    images,
+    copies: Number(row.copies || 0),
+    status: row.status || 'published',
+    featured: Boolean(row.is_featured),
+    createdAt: new Date(row.created_at).toISOString(),
+    updatedAt: new Date(row.updated_at || row.created_at).toISOString(),
+  }
+}
 
 const buildGalleryWhere = ({ query = '', tag = '', color = '', type = '' } = {}) => {
-  const clauses = []
+  const clauses = ["status = 'published'"]
   const values = []
   const parameter = (value) => {
     values.push(value)
@@ -34,34 +42,12 @@ const buildGalleryWhere = ({ query = '', tag = '', color = '', type = '' } = {})
   else if (type) clauses.push(`crosshair_type = ${parameter(type)}`)
 
   return {
-    sql: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '',
+    sql: `WHERE ${clauses.join(' AND ')}`,
     values,
   }
 }
 
 export const createRepository = (pool) => ({
-  async migrate() {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS crosshairs (
-        id TEXT PRIMARY KEY,
-        title VARCHAR(80) NOT NULL,
-        code TEXT NOT NULL,
-        description VARCHAR(300) NOT NULL DEFAULT '',
-        tags TEXT[] NOT NULL DEFAULT '{}',
-        color VARCHAR(16),
-        crosshair_type VARCHAR(16),
-        image_url TEXT NOT NULL,
-        image_key TEXT,
-        copies BIGINT NOT NULL DEFAULT 0 CHECK (copies >= 0),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-      CREATE INDEX IF NOT EXISTS crosshairs_created_at_idx ON crosshairs (created_at DESC);
-      CREATE INDEX IF NOT EXISTS crosshairs_copies_idx ON crosshairs (copies DESC);
-      ALTER TABLE crosshairs ADD COLUMN IF NOT EXISTS color VARCHAR(16);
-      ALTER TABLE crosshairs ADD COLUMN IF NOT EXISTS crosshair_type VARCHAR(16);
-    `)
-  },
-
   async seedFromFile(filename) {
     const items = JSON.parse(await fs.readFile(filename, 'utf8'))
     const client = await pool.connect()
@@ -118,10 +104,10 @@ export const createRepository = (pool) => ({
     const safePage = Math.min(page, totalPages)
     const orderBy = sort === 'new'
       ? 'created_at DESC'
-      : 'copies DESC, created_at DESC'
+      : 'is_featured DESC, copies DESC, created_at DESC'
     const values = [...filters.values, limit, (safePage - 1) * limit]
     const { rows } = await pool.query(
-      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, copies, created_at
+      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, copies, status, is_featured, created_at, updated_at
        FROM crosshairs
        ${filters.sql}
        ORDER BY ${orderBy}
@@ -139,9 +125,9 @@ export const createRepository = (pool) => ({
 
   async listAll() {
     const { rows } = await pool.query(
-      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, copies, created_at
+      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, copies, status, is_featured, created_at, updated_at
        FROM crosshairs
-       ORDER BY created_at DESC`,
+       ORDER BY updated_at DESC`,
     )
     return rows.map(mapCrosshair)
   },
@@ -151,6 +137,7 @@ export const createRepository = (pool) => ({
       `SELECT tag_value AS tag, COUNT(*)::int AS count
        FROM crosshairs
        CROSS JOIN LATERAL unnest(tags) AS tag_list(tag_value)
+       WHERE status = 'published'
        GROUP BY tag_value
        ORDER BY count DESC, tag_value ASC
        LIMIT 20`,
@@ -160,36 +147,81 @@ export const createRepository = (pool) => ({
 
   async stats() {
     const { rows: [row] } = await pool.query(
-      'SELECT COUNT(*)::int AS total, COALESCE(SUM(copies), 0)::bigint AS copies FROM crosshairs',
+      `SELECT COUNT(*)::int AS total, COALESCE(SUM(copies), 0)::bigint AS copies
+       FROM crosshairs WHERE status = 'published'`,
     )
     return { total: row.total, copies: Number(row.copies) }
   },
 
   async listIds() {
     const { rows } = await pool.query(
-      'SELECT id, created_at FROM crosshairs ORDER BY created_at DESC',
+      `SELECT id, created_at, updated_at FROM crosshairs
+       WHERE status = 'published' ORDER BY created_at DESC`,
     )
     return rows.map((row) => ({
       id: row.id,
       createdAt: new Date(row.created_at).toISOString(),
+      updatedAt: new Date(row.updated_at || row.created_at).toISOString(),
     }))
   },
 
-  async find(id) {
+  async find(id, { includeDrafts = false } = {}) {
     const { rows } = await pool.query(
-      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, image_key, copies, created_at
-       FROM crosshairs WHERE id = $1`,
-      [id],
+      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, image_key,
+              copies, status, is_featured, created_at, updated_at
+       FROM crosshairs
+       WHERE id = $1 AND ($2::boolean OR status = 'published')`,
+      [id, includeDrafts],
     )
     return rows[0] ? { ...mapCrosshair(rows[0]), imageKey: rows[0].image_key } : null
+  },
+
+  async findMany(ids) {
+    if (!ids.length) return []
+    const { rows } = await pool.query(
+      `SELECT id, title, code, description, tags, color, crosshair_type, image_url, copies, status, is_featured, created_at, updated_at
+       FROM crosshairs
+       WHERE id = ANY($1::text[]) AND status = 'published'
+       ORDER BY array_position($1::text[], id)`,
+      [ids],
+    )
+    return rows.map(mapCrosshair)
+  },
+
+  async related(id, limit = 4) {
+    const { rows } = await pool.query(
+      `WITH target AS (
+         SELECT color, crosshair_type, tags
+         FROM crosshairs
+         WHERE id = $1 AND status = 'published'
+       )
+       SELECT item.id, item.title, item.code, item.description, item.tags, item.color,
+              item.crosshair_type, item.image_url, item.copies, item.status, item.is_featured,
+              item.created_at, item.updated_at
+       FROM crosshairs AS item
+       CROSS JOIN target
+       WHERE item.id <> $1 AND item.status = 'published'
+       ORDER BY (
+         CASE WHEN item.crosshair_type IS NOT DISTINCT FROM target.crosshair_type THEN 4 ELSE 0 END
+         + CASE WHEN item.color IS NOT DISTINCT FROM target.color THEN 3 ELSE 0 END
+         + cardinality(ARRAY(SELECT unnest(item.tags) INTERSECT SELECT unnest(target.tags)))
+       ) DESC,
+       item.copies DESC,
+       item.created_at DESC
+       LIMIT $2`,
+      [id, limit],
+    )
+    return rows.map(mapCrosshair)
   },
 
   async create(item) {
     const { rows } = await pool.query(
       `INSERT INTO crosshairs
-        (id, title, code, description, tags, color, crosshair_type, image_url, image_key, copies, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, $10)
-       RETURNING id, title, code, description, tags, color, crosshair_type, image_url, copies, created_at`,
+        (id, title, code, description, tags, color, crosshair_type, image_url, image_key,
+         copies, status, is_featured, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, $10, $11, $12)
+       RETURNING id, title, code, description, tags, color, crosshair_type, image_url,
+                 copies, status, is_featured, created_at, updated_at`,
       [
         item.id,
         item.title,
@@ -200,6 +232,8 @@ export const createRepository = (pool) => ({
         item.type,
         item.image,
         item.imageKey,
+        item.status,
+        item.featured,
         item.createdAt,
       ],
     )
@@ -216,9 +250,13 @@ export const createRepository = (pool) => ({
            color = $6,
            crosshair_type = $7,
            image_url = $8,
-           image_key = $9
+           image_key = $9,
+           status = $10,
+           is_featured = $11,
+           updated_at = NOW()
        WHERE id = $1
-       RETURNING id, title, code, description, tags, color, crosshair_type, image_url, copies, created_at`,
+       RETURNING id, title, code, description, tags, color, crosshair_type, image_url,
+                 copies, status, is_featured, created_at, updated_at`,
       [
         id,
         item.title,
@@ -229,6 +267,8 @@ export const createRepository = (pool) => ({
         item.type,
         item.image,
         item.imageKey,
+        item.status,
+        item.featured,
       ],
     )
     return rows[0] ? mapCrosshair(rows[0]) : null
@@ -236,9 +276,19 @@ export const createRepository = (pool) => ({
 
   async incrementCopies(id) {
     const { rows } = await pool.query(
-      `UPDATE crosshairs SET copies = copies + 1
-       WHERE id = $1
-       RETURNING id, title, code, description, tags, color, crosshair_type, image_url, copies, created_at`,
+      `WITH updated AS (
+         UPDATE crosshairs SET copies = copies + 1
+         WHERE id = $1 AND status = 'published'
+         RETURNING id, title, code, description, tags, color, crosshair_type, image_url,
+                   copies, status, is_featured, created_at, updated_at
+       ),
+       recorded AS (
+         INSERT INTO copy_events_daily (crosshair_id, day, copies)
+         SELECT id, CURRENT_DATE, 1 FROM updated
+         ON CONFLICT (crosshair_id, day)
+         DO UPDATE SET copies = copy_events_daily.copies + 1
+       )
+       SELECT * FROM updated`,
       [id],
     )
     return rows[0] ? mapCrosshair(rows[0]) : null
@@ -250,6 +300,32 @@ export const createRepository = (pool) => ({
       [id],
     )
     return rows[0] || null
+  },
+
+  async adminStats() {
+    const [{ rows: [summary] }, { rows: daily }] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE status = 'published')::int AS published,
+                COUNT(*) FILTER (WHERE status = 'draft')::int AS drafts,
+                COALESCE(SUM(copies), 0)::bigint AS copies
+         FROM crosshairs`,
+      ),
+      pool.query(
+        `SELECT day::text, SUM(copies)::bigint AS copies
+         FROM copy_events_daily
+         WHERE day >= CURRENT_DATE - INTERVAL '13 days'
+         GROUP BY day
+         ORDER BY day ASC`,
+      ),
+    ])
+    return {
+      total: summary.total,
+      published: summary.published,
+      drafts: summary.drafts,
+      copies: Number(summary.copies),
+      daily: daily.map((row) => ({ day: row.day, copies: Number(row.copies) })),
+    }
   },
 
   async health() {

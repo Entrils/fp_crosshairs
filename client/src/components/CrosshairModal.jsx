@@ -1,8 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { responsiveImageProps } from '../lib/api'
 import { CrosshairAttributes, Icon } from './UI'
 
-export default function CrosshairModal({ item, onClose, onCopy }) {
+export default function CrosshairModal({
+  item,
+  onClose,
+  onCopy,
+  onShare,
+  favorite,
+  onToggleFavorite,
+}) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   const modalRef = useRef(null)
@@ -45,7 +53,11 @@ export default function CrosshairModal({ item, onClose, onCopy }) {
       <div ref={modalRef} className="detail-modal" role="dialog" aria-modal="true" aria-labelledby="crosshair-dialog-title" onMouseDown={(event) => event.stopPropagation()}>
         <button className="icon-button modal-close" onClick={onClose} aria-label={t('common.close')}><Icon name="close" /></button>
         <div className="detail-modal__visual">
-          <img src={item.image} alt={`${t('gallery.game')} — ${item.title}`} />
+          <img
+            {...responsiveImageProps(item, 'full', '(max-width: 950px) 100vw, 50vw')}
+            alt={`${t('gallery.game')} — ${item.title}`}
+            decoding="async"
+          />
           <span className="visual-label">{t('detail.preview')}</span>
         </div>
         <div className="detail-modal__content">
@@ -60,6 +72,14 @@ export default function CrosshairModal({ item, onClose, onCopy }) {
           </div>
           <div className="detail-actions">
             <a href={`/crosshairs/${encodeURIComponent(item.id)}`}>{t('detail.openPage')}<Icon name="arrow" size={16} /></a>
+            <button onClick={onToggleFavorite} aria-pressed={favorite}>
+              <Icon name="heart" size={15} />
+              {favorite ? t('common.removeFavorite') : t('common.addFavorite')}
+            </button>
+            <button onClick={() => onShare(item)}>
+              <Icon name="share" size={15} />
+              {t('common.share')}
+            </button>
           </div>
           <div className="how-to">
             <span>01</span>

@@ -18,6 +18,9 @@ const item = {
   image: '/previews/minimal-dot.svg',
   copies: 0,
   createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  status: 'published',
+  featured: false,
 }
 
 const config = {
@@ -39,9 +42,22 @@ describe('production API', () => {
     repository = {
       list: vi.fn().mockResolvedValue({ items: [item], total: 1, page: 1, limit: 12, totalPages: 1 }),
       listAll: vi.fn().mockResolvedValue([item]),
+      findMany: vi.fn().mockResolvedValue([item]),
+      related: vi.fn().mockResolvedValue([item]),
       listTags: vi.fn().mockResolvedValue([{ tag: 'dot', count: 1 }]),
-      listIds: vi.fn().mockResolvedValue([{ id: item.id, createdAt: item.createdAt }]),
+      listIds: vi.fn().mockResolvedValue([{
+        id: item.id,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      }]),
       stats: vi.fn().mockResolvedValue({ total: 1, copies: 0 }),
+      adminStats: vi.fn().mockResolvedValue({
+        total: 1,
+        published: 1,
+        drafts: 0,
+        copies: 0,
+        daily: [],
+      }),
       find: vi.fn().mockResolvedValue(item),
       create: vi.fn().mockResolvedValue(item),
       update: vi.fn().mockResolvedValue(item),
@@ -79,6 +95,18 @@ describe('production API', () => {
     expect(response.headers['content-security-policy']).toContain("default-src 'self'")
     expect(response.headers['strict-transport-security']).toBeTruthy()
     expect(response.headers['x-frame-options']).toBe('SAMEORIGIN')
+  })
+
+  it('returns saved and related crosshairs through public endpoints', async () => {
+    const batch = await request(app).get('/api/crosshairs/batch?ids=demo,missing')
+    expect(batch.status).toBe(200)
+    expect(batch.body.items).toHaveLength(1)
+    expect(repository.findMany).toHaveBeenCalledWith(['demo', 'missing'])
+
+    const related = await request(app).get('/api/crosshairs/demo/related')
+    expect(related.status).toBe(200)
+    expect(related.body.items[0].id).toBe('demo')
+    expect(repository.related).toHaveBeenCalledWith('demo', 4)
   })
 
   it('protects administrative mutations', async () => {

@@ -4,6 +4,7 @@ import { Pool } from 'pg'
 import { createClient } from 'redis'
 import { createApp } from './app.js'
 import { loadConfig } from './config.js'
+import { runMigrations } from './migrations.js'
 import { createRateLimits } from './rate-limits.js'
 import { createRepository } from './repository.js'
 import { createSessionManager } from './session.js'
@@ -47,12 +48,13 @@ const start = async () => {
   })
   await redis.connect()
 
+  await runMigrations(pool, path.join(serverDir, 'migrations'))
+
   const repository = createRepository(pool)
   const storage = createStorage(config)
   const rateLimits = createRateLimits(redis, config.SESSION_SECRET)
   const sessionManager = createSessionManager(config.SESSION_SECRET)
 
-  await repository.migrate()
   await repository.seedFromFile(path.join(serverDir, 'data', 'crosshairs.json'))
   await storage.initialize()
 

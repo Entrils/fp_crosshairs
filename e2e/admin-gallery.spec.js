@@ -24,7 +24,7 @@ test('gallery pagination and complete owner workflow', async ({ page }) => {
     buffer: Buffer.from('e2e-image'),
   })
   await page.getByRole('button', { name: /Publish crosshair/i }).click()
-  await expect(page.getByRole('status')).toContainText('Crosshair published')
+  await expect(page.getByRole('status')).toContainText('Crosshair saved')
 
   await page.getByRole('button', { name: /All crosshairs/i }).click()
   await expect(page.getByText('E2E Crosshair', { exact: true })).toBeVisible()

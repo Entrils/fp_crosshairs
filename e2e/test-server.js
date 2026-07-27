@@ -18,6 +18,7 @@ let items = Array.from({ length: 13 }, (_, index) => ({
   imageKey: null,
   copies: 13 - index,
   createdAt: new Date(now - index * 60_000).toISOString(),
+  updatedAt: new Date(now - index * 60_000).toISOString(),
 }))
 
 const applyFilters = ({ query = '', tag = '', color = '', type = '', sort = 'popular' } = {}) => {
@@ -55,13 +56,28 @@ const repository = {
     return [...counts].map(([tag, count]) => ({ tag, count }))
   },
   async listIds() {
-    return items.map(({ id, createdAt }) => ({ id, createdAt }))
+    return items.map(({ id, createdAt, updatedAt }) => ({ id, createdAt, updatedAt }))
   },
   async stats() {
     return { total: items.length, copies: items.reduce((sum, item) => sum + item.copies, 0) }
   },
+  async adminStats() {
+    return {
+      total: items.length,
+      published: items.filter((item) => item.status !== 'draft').length,
+      drafts: items.filter((item) => item.status === 'draft').length,
+      copies: items.reduce((sum, item) => sum + item.copies, 0),
+      daily: [{ day: new Date().toISOString().slice(0, 10), copies: 4 }],
+    }
+  },
   async find(id) {
     return items.find((item) => item.id === id) || null
+  },
+  async findMany(ids) {
+    return ids.map((id) => items.find((item) => item.id === id)).filter(Boolean)
+  },
+  async related(id, limit) {
+    return items.filter((item) => item.id !== id).slice(0, limit)
   },
   async create(item) {
     const created = { ...item, copies: 0 }

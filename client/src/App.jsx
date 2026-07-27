@@ -4,6 +4,7 @@ import AdminPage from './components/AdminPanel'
 import CrosshairPage from './components/CrosshairPage'
 import Gallery from './components/Gallery'
 import Hero from './components/Hero'
+import LibraryShelf from './components/LibraryShelf'
 import { Brand, Icon, SiteHeader, Toast } from './components/UI'
 
 const crosshairPath = /^\/crosshairs\/([^/]+)\/?$/
@@ -12,7 +13,7 @@ const Guide = () => {
   const { t } = useTranslation()
   return (
     <section className="install-section" id="guide">
-      <div className="install-copy"><span className="section-index">{t('guide.index')}</span><h2>{t('guide.title1')}<br /><em>{t('guide.title2')}</em></h2><p>{t('guide.subtitle')}</p></div>
+      <div className="install-copy"><h2>{t('guide.title1')}<br /><em>{t('guide.title2')}</em></h2><p>{t('guide.subtitle')}</p></div>
       <div className="steps">
         <div><span>01</span><Icon name="copy" /><h3>{t('guide.copyTitle')}</h3><p>{t('guide.copyText')}</p></div>
         <div><span>02</span><Icon name="crosshair" /><h3>{t('guide.settingsTitle')}</h3><p>{t('guide.settingsText')}</p></div>
@@ -66,12 +67,28 @@ export default function App() {
     return { copies: item.copies || 0, counted: false }
   }, [notify, t])
 
+  const shareCrosshair = useCallback(async (item) => {
+    const url = `${window.location.origin}/crosshairs/${encodeURIComponent(item.id)}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: item.title, text: item.description, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+      }
+      notify(t('toast.shared'))
+      return true
+    } catch (error) {
+      if (error.name !== 'AbortError') notify(t('errors.clipboard'))
+      return false
+    }
+  }, [notify, t])
+
   if (normalizedPath === '/admin') return <AdminPage />
 
   if (crosshairMatch) {
     return (
       <>
-        <CrosshairPage id={decodeURIComponent(crosshairMatch[1])} onCopy={copyCode} />
+        <CrosshairPage id={decodeURIComponent(crosshairMatch[1])} onCopy={copyCode} onShare={shareCrosshair} />
         <Toast message={toast} />
       </>
     )
@@ -82,7 +99,8 @@ export default function App() {
       <SiteHeader />
       <main>
         <Hero stats={stats} />
-        <Gallery onCopy={copyCode} onStatsChange={setStats} />
+        <Gallery onCopy={copyCode} onShare={shareCrosshair} onStatsChange={setStats} />
+        <LibraryShelf />
         <Guide />
       </main>
       <Footer />
