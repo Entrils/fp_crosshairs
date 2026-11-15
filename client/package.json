@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:wait": "node --env-file=../.env ../scripts/wait-for-server.mjs && vite",
     "build": "vite build",
     "lint": "eslint src vite.config.js"
   },

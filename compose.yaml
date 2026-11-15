@@ -24,7 +24,12 @@ services:
       S3_FORCE_PATH_STYLE: "true"
       S3_CREATE_BUCKET: "true"
       PUBLIC_ORIGIN: ${APP_PUBLIC_ORIGIN:-http://localhost:14173}
+      PUBLIC_CONTACT_EMAIL: ${PUBLIC_CONTACT_EMAIL:-}
       TRUST_PROXY: ${TRUST_PROXY:-1}
+      ADS_ENABLED: ${ADS_ENABLED:-false}
+      ADSENSE_CLIENT_ID: ${ADSENSE_CLIENT_ID:-}
+      ADSENSE_HOME_SLOT: ${ADSENSE_HOME_SLOT:-}
+      ADSENSE_DETAIL_SLOT: ${ADSENSE_DETAIL_SLOT:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -76,20 +76,33 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
 
   app.use((request, response, next) => {
     request.id = request.get('x-request-id') || crypto.randomUUID()
+    response.locals.cspNonce = crypto.randomBytes(18).toString('base64')
     response.setHeader('X-Request-ID', request.id)
     next()
   })
+  const adsScriptPolicy = config.ADS_ENABLED
+    ? [
+        "'self'",
+        (_request, response) => `'nonce-${response.locals.cspNonce}'`,
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "'strict-dynamic'",
+        'https:',
+        'http:',
+      ]
+    : ["'self'"]
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'blob:'],
-        connectSrc: ["'self'"],
+        scriptSrc: adsScriptPolicy,
+        styleSrc: config.ADS_ENABLED ? ["'self'", "'unsafe-inline'"] : ["'self'"],
+        imgSrc: config.ADS_ENABLED ? ["'self'", 'data:', 'blob:', 'https:'] : ["'self'", 'data:', 'blob:'],
+        connectSrc: config.ADS_ENABLED ? ["'self'", 'https:'] : ["'self'"],
+        frameSrc: config.ADS_ENABLED ? ['https:'] : ["'none'"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
-        baseUri: ["'self'"],
+        baseUri: config.ADS_ENABLED ? ["'none'"] : ["'self'"],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
         upgradeInsecureRequests: config.HTTPS_ENABLED ? [] : null,
@@ -131,6 +144,15 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
 
   app.get('/robots.txt', (_request, response) => {
     response.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: ${config.PUBLIC_ORIGIN}/sitemap.xml\n`)
+  })
+
+  app.get('/ads.txt', (_request, response) => {
+    if (!config.ADS_ENABLED) return response.status(404).type('text/plain').send('Ads are disabled\n')
+    const publisherId = config.ADSENSE_CLIENT_ID.replace(/^ca-/, '')
+    response
+      .setHeader('Cache-Control', 'public, max-age=3600')
+      .type('text/plain')
+      .send(`google.com, ${publisherId}, DIRECT, f08c47fec0942fa0\n`)
   })
 
   app.get('/sitemap.xml', async (_request, response, next) => {
@@ -182,6 +204,21 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
     } catch (error) {
       next(error)
     }
+  })
+
+  app.get('/api/public-config', (_request, response) => {
+    response.setHeader('Cache-Control', 'public, max-age=300')
+    response.json({
+      advertising: {
+        enabled: Boolean(config.ADS_ENABLED),
+        clientId: config.ADS_ENABLED ? config.ADSENSE_CLIENT_ID : '',
+        slots: {
+          home: config.ADS_ENABLED ? config.ADSENSE_HOME_SLOT : '',
+          detail: config.ADS_ENABLED ? config.ADSENSE_DETAIL_SLOT : '',
+        },
+      },
+      contactEmail: config.PUBLIC_CONTACT_EMAIL || '',
+    })
   })
 
   app.get('/api/crosshairs/batch', async (request, response, next) => {
@@ -398,25 +435,59 @@ export const createApp = ({ config, repository, storage, rateLimits, sessionMana
   if (distDir && fs.existsSync(distDir)) {
     const assetsDir = path.join(distDir, 'assets')
     const indexTemplate = fs.readFileSync(path.join(distDir, 'index.html'), 'utf8')
+    const withRuntimeHead = (html, nonce, includeAds = true) => {
+      let result = html.replace('<script type="module"', `<script nonce="${nonce}" type="module"`)
+      if (!config.ADS_ENABLED || !includeAds) return result
+      const adsenseHead = [
+        `<meta name="google-adsense-account" content="${config.ADSENSE_CLIENT_ID}" />`,
+        `<script id="adsense-script" nonce="${nonce}" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${config.ADSENSE_CLIENT_ID}" crossorigin="anonymous"></script>`,
+      ].join('')
+      return result.replace('</head>', `${adsenseHead}</head>`)
+    }
     app.use('/assets', express.static(assetsDir, { maxAge: '1y', immutable: true }))
     app.use(express.static(distDir, { index: false, maxAge: '1h' }))
     const sendApp = (request, response) => {
       response.setHeader('Cache-Control', 'no-store')
-      response.setHeader('Link', `<${config.PUBLIC_ORIGIN}${request.path === '/admin' ? '/admin' : '/'}>; rel="canonical"`)
+      const canonicalPath = request.path === '/admin' || request.path === '/privacy'
+        ? request.path
+        : '/'
+      response.setHeader('Link', `<${config.PUBLIC_ORIGIN}${canonicalPath}>; rel="canonical"`)
       if (request.path === '/admin') response.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive')
-      response.sendFile(path.join(distDir, 'index.html'))
+      let html = withRuntimeHead(indexTemplate, response.locals.cspNonce, request.path !== '/admin')
+      if (request.path === '/privacy') {
+        html = html
+          .replace(
+            '<title>Fragpunk Crosshairs</title>',
+            '<title>Privacy Policy — Fragpunk Crosshairs</title>',
+          )
+          .replace(
+            /<meta name="description" content="[^"]*"\s*\/>/,
+            '<meta name="description" content="Privacy and cookie policy for Fragpunk Crosshairs." />',
+          )
+          .replace(
+            '</head>',
+            `<link rel="canonical" href="${config.PUBLIC_ORIGIN}/privacy" /></head>`,
+          )
+      }
+      response.type('html').send(html)
     }
     app.get('/', sendApp)
     app.get('/admin', sendApp)
+    app.get('/privacy', sendApp)
     app.get('/crosshairs/:id', async (request, response, next) => {
       try {
         const item = await repository.find(request.params.id)
-        if (!item) return response.status(404).type('html').send(indexTemplate)
+        if (!item) {
+          return response
+            .status(404)
+            .type('html')
+            .send(withRuntimeHead(indexTemplate, response.locals.cspNonce))
+        }
         const title = escapeMarkup(`${item.title} — Fragpunk Crosshairs`)
         const description = escapeMarkup(item.description || `FragPunk crosshair code: ${item.title}`)
         const canonical = `${config.PUBLIC_ORIGIN}/crosshairs/${encodeURIComponent(item.id)}`
         const image = item.image.startsWith('http') ? item.image : `${config.PUBLIC_ORIGIN}${item.image}`
-        const html = indexTemplate
+        const html = withRuntimeHead(indexTemplate, response.locals.cspNonce)
           .replace('<title>Fragpunk Crosshairs</title>', `<title>${title}</title>`)
           .replace(
             /<meta name="description" content="[^"]*"\s*\/>/,

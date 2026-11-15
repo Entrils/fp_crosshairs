@@ -26,6 +26,16 @@ const ru = {
     pagination: 'Страницы галереи', previous: 'Предыдущая страница', next: 'Следующая страница',
   },
   filters: { color: 'Цвет', type: 'Тип', allColors: 'Все цвета', allTypes: 'Все типы', noType: 'Другое' },
+  ads: { label: 'Реклама', privacy: 'Настройки конфиденциальности и cookies' },
+  privacy: {
+    link: 'Конфиденциальность', back: 'На главную', title: 'Политика конфиденциальности', updated: 'Обновлено: 28 июля 2026 г.',
+    intro: 'Fragpunk Crosshairs хранит только данные, необходимые для работы каталога, безопасности и выбранных вами функций.',
+    localTitle: 'Локальные данные', localText: 'Язык, избранные и недавно просмотренные прицелы сохраняются в localStorage вашего браузера. Их можно удалить очисткой данных сайта. Сессия администратора использует защищённый HttpOnly cookie.',
+    adsTitle: 'Реклама Google', adsText: 'Когда реклама включена, сторонние поставщики, включая Google, могут использовать cookies и другие идентификаторы для показа и измерения рекламы. Рекламные cookies Google позволяют показывать объявления с учётом посещений этого и других сайтов.',
+    adsChoices: 'Персонализацию рекламы можно изменить в', googleSettings: 'настройках рекламы Google.',
+    retentionTitle: 'Безопасность и хранение', retentionText: 'Количество копирований хранится в агрегированном виде. Краткоживущие псевдонимные идентификаторы в Redis используются для ограничения попыток входа и повторного подсчёта копирований.',
+    contactTitle: 'Контакт',
+  },
   options: {
     colors: {
       red: 'Красный', orange: 'Оранжевый', yellow: 'Жёлтый', green: 'Зелёный', blue: 'Синий',
@@ -107,6 +117,16 @@ const en = {
     pagination: 'Gallery pages', previous: 'Previous page', next: 'Next page',
   },
   filters: { color: 'Color', type: 'Type', allColors: 'All colors', allTypes: 'All types', noType: 'Other' },
+  ads: { label: 'Advertisement', privacy: 'Privacy and cookie settings' },
+  privacy: {
+    link: 'Privacy', back: 'Back home', title: 'Privacy policy', updated: 'Updated: July 28, 2026',
+    intro: 'Fragpunk Crosshairs stores only the data needed to run the catalog, protect the service, and provide features you choose.',
+    localTitle: 'Local data', localText: 'Language, favorites, and recently viewed crosshairs are stored in your browser localStorage. You can remove them by clearing site data. The admin session uses a secure HttpOnly cookie.',
+    adsTitle: 'Google advertising', adsText: 'When advertising is enabled, third-party vendors, including Google, may use cookies and other identifiers to serve and measure ads. Google advertising cookies may be used to show ads based on visits to this and other websites.',
+    adsChoices: 'You can control ad personalization in', googleSettings: 'Google Ads Settings.',
+    retentionTitle: 'Security and retention', retentionText: 'Copy totals are stored in aggregate form. Short-lived pseudonymous identifiers in Redis are used to limit login attempts and duplicate copy counting.',
+    contactTitle: 'Contact',
+  },
   options: {
     colors: {
       red: 'Red', orange: 'Orange', yellow: 'Yellow', green: 'Green', blue: 'Blue',
@@ -188,6 +208,16 @@ const de = {
     pagination: 'Galerieseiten', previous: 'Vorherige Seite', next: 'Nächste Seite',
   },
   filters: { color: 'Farbe', type: 'Typ', allColors: 'Alle Farben', allTypes: 'Alle Typen', noType: 'Sonstiges' },
+  ads: { label: 'Anzeige', privacy: 'Datenschutz- und Cookie-Einstellungen' },
+  privacy: {
+    link: 'Datenschutz', back: 'Zur Startseite', title: 'Datenschutzerklärung', updated: 'Aktualisiert: 28. Juli 2026',
+    intro: 'Fragpunk Crosshairs speichert nur Daten, die für den Katalog, die Sicherheit und gewählte Funktionen erforderlich sind.',
+    localTitle: 'Lokale Daten', localText: 'Sprache, Favoriten und zuletzt angesehene Fadenkreuze werden im localStorage des Browsers gespeichert. Sie können durch Löschen der Website-Daten entfernt werden. Die Admin-Sitzung verwendet ein sicheres HttpOnly-Cookie.',
+    adsTitle: 'Google-Werbung', adsText: 'Wenn Werbung aktiviert ist, können Drittanbieter einschließlich Google Cookies und andere Kennungen zur Auslieferung und Messung von Anzeigen verwenden. Google-Werbe-Cookies können Anzeigen anhand von Besuchen auf dieser und anderen Websites auswählen.',
+    adsChoices: 'Die Anzeigenpersonalisierung lässt sich in den', googleSettings: 'Google-Anzeigeneinstellungen ändern.',
+    retentionTitle: 'Sicherheit und Speicherung', retentionText: 'Kopierzähler werden aggregiert gespeichert. Kurzlebige pseudonyme Kennungen in Redis begrenzen Anmeldeversuche und doppelte Kopier-Zählungen.',
+    contactTitle: 'Kontakt',
+  },
   options: {
     colors: {
       red: 'Rot', orange: 'Orange', yellow: 'Gelb', green: 'Grün', blue: 'Blau',
@@ -269,6 +299,16 @@ const fr = {
     pagination: 'Pages de la galerie', previous: 'Page précédente', next: 'Page suivante',
   },
   filters: { color: 'Couleur', type: 'Type', allColors: 'Toutes les couleurs', allTypes: 'Tous les types', noType: 'Autre' },
+  ads: { label: 'Publicité', privacy: 'Paramètres de confidentialité et cookies' },
+  privacy: {
+    link: 'Confidentialité', back: 'Retour à l’accueil', title: 'Politique de confidentialité', updated: 'Mise à jour : 28 juillet 2026',
+    intro: 'Fragpunk Crosshairs conserve uniquement les données nécessaires au catalogue, à la sécurité et aux fonctions choisies.',
+    localTitle: 'Données locales', localText: 'La langue, les favoris et les réticules récemment consultés sont enregistrés dans le localStorage du navigateur. Ils peuvent être supprimés avec les données du site. La session administrateur utilise un cookie HttpOnly sécurisé.',
+    adsTitle: 'Publicité Google', adsText: 'Lorsque la publicité est activée, des fournisseurs tiers, dont Google, peuvent utiliser des cookies et autres identifiants pour diffuser et mesurer les annonces. Les cookies publicitaires Google peuvent adapter les annonces aux visites de ce site et d’autres sites.',
+    adsChoices: 'La personnalisation peut être modifiée dans les', googleSettings: 'paramètres des annonces Google.',
+    retentionTitle: 'Sécurité et conservation', retentionText: 'Les copies sont conservées sous forme agrégée. Des identifiants pseudonymes temporaires dans Redis limitent les tentatives de connexion et les doubles comptages.',
+    contactTitle: 'Contact',
+  },
   options: {
     colors: {
       red: 'Rouge', orange: 'Orange', yellow: 'Jaune', green: 'Vert', blue: 'Bleu',
@@ -350,6 +390,16 @@ const zh = {
     pagination: '准星库分页', previous: '上一页', next: '下一页',
   },
   filters: { color: '颜色', type: '类型', allColors: '全部颜色', allTypes: '全部类型', noType: '其他' },
+  ads: { label: '广告', privacy: '隐私和 Cookie 设置' },
+  privacy: {
+    link: '隐私', back: '返回首页', title: '隐私政策', updated: '更新日期：2026年7月28日',
+    intro: 'Fragpunk Crosshairs 仅存储运行目录、保障安全以及提供所选功能所需的数据。',
+    localTitle: '本地数据', localText: '语言、收藏和最近浏览的准星保存在浏览器 localStorage 中，可通过清除网站数据删除。管理员会话使用安全的 HttpOnly Cookie。',
+    adsTitle: 'Google 广告', adsText: '启用广告后，包括 Google 在内的第三方供应商可能使用 Cookie 和其他标识符来投放及衡量广告。Google 广告 Cookie 可能根据用户对此网站及其他网站的访问展示广告。',
+    adsChoices: '您可以在以下页面管理广告个性化：', googleSettings: 'Google 广告设置。',
+    retentionTitle: '安全与保留', retentionText: '复制次数以汇总形式保存。Redis 中的短期匿名标识符用于限制登录尝试并避免重复计算复制次数。',
+    contactTitle: '联系方式',
+  },
   options: {
     colors: {
       red: '红色', orange: '橙色', yellow: '黄色', green: '绿色', blue: '蓝色',

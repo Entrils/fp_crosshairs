@@ -20,7 +20,9 @@ test('mobile gallery stays within viewport and never loads Three.js', async ({ p
   }))
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1)
   expect(requestedUrls.some((url) => url.includes('HeroScene'))).toBe(false)
+  expect(requestedUrls.some((url) => url.includes('googlesyndication.com'))).toBe(false)
   await expect(page.locator('.hero-three, .hero canvas')).toHaveCount(0)
+  await expect(page.locator('.ad-placement')).toHaveCount(0)
 
   await page.locator('.card__open').first().click()
   const dialog = page.getByRole('dialog')

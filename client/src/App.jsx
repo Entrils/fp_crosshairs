@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AdminPage from './components/AdminPanel'
+import { AdUnit } from './components/Advertising'
 import CrosshairPage from './components/CrosshairPage'
 import Gallery from './components/Gallery'
 import Hero from './components/Hero'
 import LibraryShelf from './components/LibraryShelf'
+import PrivacyPage from './components/PrivacyPage'
 import { Brand, Icon, SiteHeader, Toast } from './components/UI'
+import { openPrivacyChoices, usePublicConfig } from './lib/advertising'
 
 const crosshairPath = /^\/crosshairs\/([^/]+)\/?$/
 
@@ -23,12 +26,16 @@ const Guide = () => {
   )
 }
 
-const Footer = () => {
+const Footer = ({ advertising }) => {
   const { t } = useTranslation()
   return (
     <footer>
       <Brand />
       <p>{t('footer.disclaimer')}</p>
+      <a className="footer-link" href="/privacy">{t('privacy.link')}</a>
+      {advertising.enabled && (
+        <button className="privacy-choices" onClick={openPrivacyChoices}>{t('ads.privacy')}</button>
+      )}
       <span>© 2026 Fragpunk Crosshairs</span>
     </footer>
   )
@@ -40,6 +47,7 @@ export default function App() {
   const [stats, setStats] = useState({ total: null, copies: 0 })
   const normalizedPath = window.location.pathname.replace(/\/+$/, '') || '/'
   const crosshairMatch = window.location.pathname.match(crosshairPath)
+  const { advertising, contactEmail } = usePublicConfig(normalizedPath !== '/admin')
 
   useEffect(() => {
     if (normalizedPath === '/') document.title = 'Fragpunk Crosshairs'
@@ -85,10 +93,24 @@ export default function App() {
 
   if (normalizedPath === '/admin') return <AdminPage />
 
+  if (normalizedPath === '/privacy') {
+    return (
+      <>
+        <PrivacyPage contactEmail={contactEmail} />
+        <Footer advertising={advertising} />
+      </>
+    )
+  }
+
   if (crosshairMatch) {
     return (
       <>
-        <CrosshairPage id={decodeURIComponent(crosshairMatch[1])} onCopy={copyCode} onShare={shareCrosshair} />
+        <CrosshairPage
+          id={decodeURIComponent(crosshairMatch[1])}
+          onCopy={copyCode}
+          onShare={shareCrosshair}
+          advertising={advertising}
+        />
         <Toast message={toast} />
       </>
     )
@@ -99,11 +121,12 @@ export default function App() {
       <SiteHeader />
       <main>
         <Hero stats={stats} />
+        <AdUnit advertising={advertising} slot={advertising.slots.home} placement="home" />
         <Gallery onCopy={copyCode} onShare={shareCrosshair} onStatsChange={setStats} />
         <LibraryShelf />
         <Guide />
       </main>
-      <Footer />
+      <Footer advertising={advertising} />
       <Toast message={toast} />
     </>
   )

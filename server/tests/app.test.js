@@ -97,6 +97,54 @@ describe('production API', () => {
     expect(response.headers['x-frame-options']).toBe('SAMEORIGIN')
   })
 
+  it('keeps advertising code and ads.txt absent while monetization is disabled', async () => {
+    const publicConfig = await request(app).get('/api/public-config')
+    expect(publicConfig.status).toBe(200)
+    expect(publicConfig.body.advertising).toEqual({
+      enabled: false,
+      clientId: '',
+      slots: { home: '', detail: '' },
+    })
+
+    const adsText = await request(app).get('/ads.txt')
+    expect(adsText.status).toBe(404)
+
+    const homepage = await request(app).get('/')
+    expect(homepage.text).not.toContain('pagead2.googlesyndication.com')
+    expect(homepage.headers['content-security-policy']).not.toContain('strict-dynamic')
+  })
+
+  it('serves AdSense verification, ads.txt and a nonce CSP when enabled', async () => {
+    const advertisingConfig = {
+      ...config,
+      ADS_ENABLED: true,
+      ADSENSE_CLIENT_ID: 'ca-pub-1234567890123456',
+      ADSENSE_HOME_SLOT: '1111111111',
+      ADSENSE_DETAIL_SLOT: '2222222222',
+    }
+    const advertisingApp = createApp({
+      config: advertisingConfig,
+      repository,
+      storage,
+      rateLimits,
+      sessionManager: sessions,
+      distDir: clientDir,
+    })
+
+    const adsText = await request(advertisingApp).get('/ads.txt')
+    expect(adsText.status).toBe(200)
+    expect(adsText.text).toContain('google.com, pub-1234567890123456, DIRECT')
+
+    const homepage = await request(advertisingApp).get('/')
+    expect(homepage.text).toContain('name="google-adsense-account"')
+    expect(homepage.text).toContain('pagead2.googlesyndication.com/pagead/js/adsbygoogle.js')
+    expect(homepage.text).toMatch(/<script nonce="[^"]+" type="module"/)
+    expect(homepage.headers['content-security-policy']).toContain('strict-dynamic')
+
+    const admin = await request(advertisingApp).get('/admin')
+    expect(admin.text).not.toContain('pagead2.googlesyndication.com')
+  })
+
   it('returns saved and related crosshairs through public endpoints', async () => {
     const batch = await request(app).get('/api/crosshairs/batch?ids=demo,missing')
     expect(batch.status).toBe(200)

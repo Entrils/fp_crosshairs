@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchJson, responsiveImageProps } from '../lib/api'
 import { rememberRecent, toggleFavorite, useStoredIds } from '../lib/library'
+import { AdUnit } from './Advertising'
 import { CrosshairAttributes, Icon, SiteHeader } from './UI'
 
-export default function CrosshairPage({ id, onCopy, onShare }) {
+export default function CrosshairPage({ id, onCopy, onShare, advertising }) {
   const { t } = useTranslation()
   const [item, setItem] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -90,6 +91,9 @@ export default function CrosshairPage({ id, onCopy, onShare }) {
               </div>
             </div>
           </article>
+        )}
+        {!loading && !error && item && (
+          <AdUnit advertising={advertising} slot={advertising.slots.detail} placement="detail" />
         )}
         {!loading && !error && related.length > 0 && (
           <section className="related-section" aria-labelledby="related-title">

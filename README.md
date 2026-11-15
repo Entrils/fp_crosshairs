@@ -62,6 +62,8 @@ npm run dev
 ```
 
 Vite работает на `http://localhost:5173`, API — на `http://localhost:4173`.
+При общем `npm run dev` Vite запускается только после успешного API health-check, поэтому на старте
+не должно быть временных `ECONNREFUSED`.
 
 Запустить части отдельно:
 
@@ -92,11 +94,37 @@ npm run build --workspace client
 - `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`
 - `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
 - `PUBLIC_ORIGIN=https://ваш-домен`
+- `PUBLIC_CONTACT_EMAIL` — адрес для страницы конфиденциальности
 - `TRUST_PROXY=1` за одним доверенным reverse proxy
 
 Приложение завершает запуск при отсутствующей или небезопасной конфигурации.
 SQL-файлы из `server/migrations/` применяются по порядку при старте и записываются в таблицу
 `schema_migrations`. Не изменяйте уже применённую миграцию — добавляйте следующую.
+
+## Монетизация через Google AdSense
+
+Реклама по умолчанию полностью отключена. Чтобы включить:
+
+1. Добавьте production-домен в AdSense и дождитесь статуса сайта `Ready`.
+2. В AdSense создайте адаптивные Display-блоки для главной и страницы прицела либо включите Auto Ads.
+3. В Render задайте:
+
+```env
+ADS_ENABLED=true
+ADSENSE_CLIENT_ID=ca-pub-1234567890123456
+ADSENSE_HOME_SLOT=1234567890
+ADSENSE_DETAIL_SLOT=2345678901
+PUBLIC_CONTACT_EMAIL=you@example.com
+```
+
+Для одних Auto Ads оба `ADSENSE_*_SLOT` можно оставить пустыми. После перезапуска приложение само добавляет
+проверочный meta-тег, официальный асинхронный скрипт, responsive-блоки и `/ads.txt`. Для полного отключения
+достаточно вернуть `ADS_ENABLED=false` и перезапустить сервис — внешние рекламные запросы выполняться не будут.
+
+Перед показом рекламы опубликуйте в AdSense сообщение `Privacy & messaging → European regulations`.
+Для трафика EEA, Великобритании и Швейцарии Google требует сертифицированный CMP; встроенное сообщение Google
+подходит для этого. Страница политики доступна по `/privacy`, ссылка на повторное открытие выбора cookies —
+в футере.
 
 ## Проверки
 
